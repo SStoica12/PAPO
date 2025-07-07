@@ -2,450 +2,1211 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="description"
-        content="PAPO">
+  <meta name="description" content="PAPO: Perception-Aware Policy Optimization for Multimodal Reasoning">
   <meta name="keywords" content="PAPO, RL, GRPO, Multimodal Reasoning">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PAPO: Perception-Aware Policy Optimization for Multimodal Reasoning</title>
 
-  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
-        rel="stylesheet">
-
-  <link rel="stylesheet" href="./static/css/bulma.min.css">
-  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
-  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
-  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
-  <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
-  <link rel="stylesheet" href="./static/css/index.css">
-  <link rel="icon" href="./static/images/icon.png">
-
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script defer src="./static/js/fontawesome.all.min.js"></script>
-  <script src="./static/js/bulma-carousel.min.js"></script>
-  <script src="./static/js/bulma-slider.min.js"></script>
-  <script src="./static/js/index.js"></script>
-
-
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      var toggles = document.querySelectorAll('.toggle-section');
-      toggles.forEach(function(toggle) {
-        toggle.addEventListener('click', function() {
-          var content = document.getElementById(toggle.getAttribute('aria-controls'));
-          content.classList.toggle('is-active');
-          toggle.children[1].classList.toggle('fa-angle-down');
-          toggle.children[1].classList.toggle('fa-angle-up');
-        });
-      });
-    });
-  </script>
-
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
   <style>
-    .collapse-content {
-      display: none;
-      margin-top: 10px;
+    :root {
+      --primary-color: #3273dc;
+      --secondary-color: #6366f1;
+      --accent-color: #f59e0b;
+      --background-color: #f8fafc;
+      --card-background: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     }
-    .collapse-content.is-active {
-      display: block;
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    .toggle-section .icon.is-small {
+
+    body {
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      color: var(--text-primary);
+      background: var(--background-color);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* Hero Section */
+    .hero {
+      background: var(--gradient-1);
+      color: white;
+      padding: 80px 0;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+      opacity: 0.1;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero h1 {
+      font-size: 3.5rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      animation: fadeInUp 1s ease-out;
+    }
+
+    .hero .subtitle {
+      font-size: 1.2rem;
+      margin-bottom: 30px;
+      opacity: 0.9;
+      animation: fadeInUp 1s ease-out 0.2s both;
+    }
+
+    .authors {
+      margin-bottom: 30px;
+      animation: fadeInUp 1s ease-out 0.4s both;
+    }
+
+    .author-block {
+      display: inline-block;
+      margin: 0 5px;
+    }
+
+    .publication-links {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      animation: fadeInUp 1s ease-out 0.6s both;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      text-decoration: none;
+      border-radius: 50px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Section Cards */
+    .section-card {
+      background: var(--card-background);
+      border-radius: 20px;
+      padding: 40px;
+      margin: 40px 0;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .section-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--gradient-1);
+    }
+
+    .section-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+
+    .section-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 30px;
+      color: var(--text-primary);
+      position: relative;
+    }
+
+    .section-subtitle {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 30px 0 20px 0;
+      color: var(--secondary-color);
+    }
+
+    /* Interactive Tables */
+    .interactive-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .interactive-table thead {
+      background: var(--gradient-1);
+      color: white;
+    }
+
+    .interactive-table th,
+    .interactive-table td {
+      padding: 15px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .interactive-table tbody tr {
+      transition: all 0.3s ease;
+    }
+
+    .interactive-table tbody tr:hover {
+      background: #f1f5f9;
+      transform: scale(1.01);
+    }
+
+    .interactive-table .highlight {
+      background: rgba(99, 102, 241, 0.1);
+      font-weight: 600;
+      color: var(--secondary-color);
+    }
+
+    /* Figure containers */
+    .figure-container {
+      text-align: center;
+      margin: 30px 0;
+      padding: 20px;
+      background: #f8fafc;
+      border-radius: 15px;
+      border: 2px dashed var(--border-color);
+      transition: all 0.3s ease;
+    }
+
+    .figure-container:hover {
+      border-color: var(--secondary-color);
+      background: #f1f5f9;
+    }
+
+    .figure-container img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
       transition: transform 0.3s ease;
     }
-    .toggle-section .fa-angle-up {
-      transform: rotate(180deg);
-    }
-  </style>
 
-  <style>
-    .banner {
-      background-color: #f5f5f5;
-      padding: 10px 0;
-      border-bottom: 1px solid #ddd;
+    .figure-container img:hover {
+      transform: scale(1.02);
     }
-    .banner .container {
+
+    .figure-caption {
+      margin-top: 15px;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      font-style: normal;
+      font-weight: normal;
+    }
+
+    .figure-caption strong {
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* Tab System */
+    .tab-container {
+      margin: 30px 0;
+    }
+
+    .tab-buttons {
       display: flex;
-      justify-content: center; /* Center the links horizontally */
-      align-items: center;
-      gap: 100px; /* Controls the spacing between links */
+      gap: 5px;
+      margin-bottom: 20px;
+      background: #f1f5f9;
+      padding: 5px;
+      border-radius: 10px;
     }
 
-    .banner a {
-      color: #3273dc;
-      text-decoration: none;
-      font-weight: bold;
-      margin: 0; /* Remove any additional margin */
-      padding: 5px; /* Optional: Adjust padding around the links */
-      font-size: 18px;
+    .tab-button {
+      flex: 1;
+      padding: 12px 20px;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
     }
 
-    .banner a:hover {
-      text-decoration: underline;
+    .tab-button.active {
+      background: white;
+      color: var(--secondary-color);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .fade-in {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.8s ease;
+    }
+
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Filter buttons */
+    .filter-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 8px 16px;
+      background: #e2e8f0;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+    }
+
+    .filter-btn.active {
+      background: var(--secondary-color);
+      color: white;
+    }
+
+    /* Resources section */
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin: 30px 0;
+    }
+
+    .resource-card {
+      background: var(--card-background);
+      padding: 25px;
+      border-radius: 15px;
+      border: 1px solid var(--border-color);
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .resource-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .resource-card .icon {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+      color: var(--secondary-color);
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2.5rem;
+      }
+      
+      .section-card {
+        padding: 25px;
+        margin: 20px 0;
+      }
+      
+      .section-title {
+        font-size: 2rem;
+      }
+      
+      .publication-links {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .tab-buttons {
+        flex-direction: column;
+      }
+      
+      .interactive-table {
+        font-size: 0.9rem;
+      }
+      
+      .interactive-table th,
+      .interactive-table td {
+        padding: 10px;
+      }
+    }
+
+    /* Loading animation */
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid var(--secondary-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Scroll indicator */
+    .scroll-indicator {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 4px;
+      background: var(--gradient-1);
+      z-index: 1000;
+      transition: width 0.3s ease;
     }
   </style>
-
 </head>
+
 <body>
+  <div class="scroll-indicator" id="scrollIndicator"></div>
 
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <h1>PAPO: Perception-Aware Policy Optimization for Multimodal Reasoning</h1>
+        <p class="subtitle">A simple yet effective extension of GRPO that encourages models to learn to perceive while learning to reason</p>
+        
+        <div class="authors">
+          <span class="author-block">
+            <a href="https://mikewangwzhl.github.io/" style="color: white;">Zhenhailong Wang</a><sup>1*†</sup>,
+          </span>
+          <span class="author-block">
+            <a href="" style="color: white;">Xuehang Guo</a><sup>1*</sup>,
+          </span>
+          <span class="author-block">
+            <a href="" style="color: white;">Sofia Stoica</a><sup>1</sup>,
+          </span>
+          <span class="author-block">
+            <a href="https://scholar.google.com/citations?user=qZYvce8AAAAJ&hl=en" style="color: white;">Haiyang Xu</a><sup>2†</sup>,
+          </span>
+          <span class="author-block">
+            <a href="" style="color: white;">Hongru Wang</a><sup>1</sup>,
+          </span>
+          <span class="author-block">
+            <a href="https://hyeonjeongha.github.io/" style="color: white;">Hyeonjeong Ha</a><sup>1</sup>,
+          </span>
+          <span class="author-block">
+            <a href="https://xiusic.github.io/" style="color: white;">Xiusi Chen</a><sup>1</sup>,
+          </span>
+          <span class="author-block">
+            <a href="https://yangyi-chen.github.io/" style="color: white;">Yangyi Chen</a><sup>1</sup>,
+          </span>
+          <span class="author-block">
+            <a href="https://scholar.google.com/citations?user=uIUfGxYAAAAJ&hl=zh-CN" style="color: white;">Ming Yan</a><sup>2</sup>,
+          </span>
+          <span class="author-block">
+            <a href="https://scholar.google.com/citations?user=9r98PpoAAAAJ&hl=zh-CN" style="color: white;">Fei Huang</a><sup>2</sup>,
+          </span>
+          <span class="author-block">
+            <a href="https://blender.cs.illinois.edu/hengji.html" style="color: white;">Heng Ji</a><sup>1†</sup>
+          </span>
+        </div>
 
-<!-- <section class="banner">
-  <div class="container">
-    <a href="https://github.com/X-PLUG/MobileAgent">Mobile-Agent Series</a>
-    <a href="https://github.com/X-PLUG/MobileAgent/tree/main/Mobile-Agent">Mobile-Agent-v1</a>
-    <a href="https://github.com/X-PLUG/MobileAgent/tree/main/Mobile-Agent-v2">Mobile-Agent-v2</a>
-    <a href="https://github.com/X-PLUG/MobileAgent/tree/main/Mobile-Agent-E">Mobile-Agent-E</a>
-  </div>
-</section> -->
+        <div style="margin-bottom: 20px;">
+          <span style="opacity: 0.9;"><sup>1</sup>University of Illinois Urbana-Champaign, <sup>2</sup>Alibaba Group</span><br>
+          <span style="opacity: 0.8; font-size: 0.9rem;"><sup>*</sup>Equal Contribution, <sup>†</sup>Corresponding Author</span>
+        </div>
 
+        <div class="publication-links">
+          <a href="" class="button">
+            <i class="fas fa-file-alt"></i>
+            <span>arXiv</span>
+          </a>
+          <a href="" class="button">
+            <i class="fas fa-file-pdf"></i>
+            <span>PDF</span>
+          </a>
+          <a href="" class="button">
+            <i class="fab fa-github"></i>
+            <span>Code (coming soon)</span>
+          </a>
+          <a href="" class="button">
+            <i class="fas fa-robot"></i>
+            <span>Model (coming soon)</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
 
-<section class="hero">
-  <div class="hero-body">
-    <div class="container is-max-desktop">
-      <div class="columns is-centered">
-        <div class="column has-text-centered">
-          <h1 class="title is-1 publication-title">
-            <!-- <img src="./static/images/icon.png" alt="Icon" style="vertical-align: middle; height: 70px; margin-right: 10px; margin-bottom: 9px"> -->
-            PAPO: Perception-Aware Policy Optimization for Multimodal Reasoning</h1>
-          <div class="is-size-5 publication-authors">
-            <span class="author-block">
-              <a href="https://mikewangwzhl.github.io/">Zhenhailong Wang</a><sup>1*†</sup>,
-            </span>
-            <span class="author-block">
-              <a href="">Xuehang Guo</a><sup>1*</sup>,
-            </span>
-            <span class="author-block">
-              <a href="">Sofia Stoica</a><sup>1</sup>,
-            </span>
-            <span class="author-block">
-              <a href="https://scholar.google.com/citations?user=qZYvce8AAAAJ&hl=en">Haiyang Xu</a><sup>2†</sup>,
-            </span>
-            <span class="author-block">
-              <a href="">Hongru Wang</a><sup>1</sup>,
-            </span>
-            <span class="author-block">
-              <a href="https://hyeonjeongha.github.io/">Hyeonjeong Ha</a><sup>1</sup>,
-            </span>
-            <span class="author-block">
-              <a href="https://xiusic.github.io/">Xiusi Chen</a><sup>1</sup>,
-            </span>
-            <span class="author-block">
-              <a href="https://yangyi-chen.github.io/">Yangyi Chen</a><sup>1</sup>,
-            </span>
-            <span class="author-block">
-              <a href="https://scholar.google.com/citations?user=uIUfGxYAAAAJ&hl=zh-CN">Ming Yan</a><sup>2</sup>,
-            </span>
-            <span class="author-block">
-              <a href="https://scholar.google.com/citations?user=9r98PpoAAAAJ&hl=zh-CN">Fei Huang</a><sup>2</sup>,
-            </span>
-            <span class="author-block">
-              <a href="https://blender.cs.illinois.edu/hengji.html">Heng Ji</a><sup>1†</sup>
-            </span>
+  <!-- Abstract Section -->
+  <section class="container">
+    <div class="section-card fade-in">
+      <h2 class="section-title">
+        <i class="fas fa-lightbulb" style="color: var(--accent-color); margin-right: 15px;"></i>
+        Abstract
+      </h2>
+      <p style="font-size: 1.1rem; line-height: 1.8;">
+        Reinforcement Learning with Verifiable Rewards (RLVR) has proven to be a highly effective strategy for endowing Large Language Models (LLMs) with robust multi-step reasoning abilities. However, its design and optimizations remain tailored to purely textual domains, resulting in suboptimal performance when applied to multimodal reasoning tasks. In particular, we observe that a major source of error in current multimodal reasoning lies in the perception of visual inputs. To address this bottleneck, we propose <strong>Perception-Aware Policy Optimization (PAPO)</strong>, a simple yet effective extension of GRPO that encourages the model to learn to perceive while learning to reason. Notably, PAPO does not rely on additional data curation, external reward models, or proprietary models. Specifically, we introduce the Implicit Perception Loss in the form of a KL divergence term to the GRPO objective, which, despite its simplicity, yields significant overall improvements (4.4%) on diverse multimodal benchmarks. The improvements are more pronounced, up to 8.0%, on heavily vision-dependent tasks. We also observe a substantial reduction (30.5%) in perception errors, indicating improved perceptual capabilities with PAPO.
+      </p>
+    </div>
+  </section>
+
+  <!-- Perception Bottleneck Section -->
+  <section class="container">
+    <div class="section-card fade-in">
+      <h2 class="section-title">
+        <i class="fas fa-eye" style="color: var(--secondary-color); margin-right: 15px;"></i>
+        Perception Bottleneck in Multimodal Reasoning
+      </h2>
+      
+      <div class="figure-container">
+        <img src="./static/images/teaser.png" alt="teaser" style="width: 800px; max-width: 100%;"/>
+        <div class="figure-caption"><strong>Figure 1:</strong> Comprehensive error-type breakdown and inference example between GRPO and PAPO.</div>
+      </div>
+      
+      <p style="font-size: 1.1rem; line-height: 1.8; margin-top: 30px;">
+        We raise two fundamental research questions: <span style="font-family: 'Georgia', 'Times New Roman', serif; font-style: italic; font-size: 1.15rem; color: var(--secondary-color); font-weight: 500; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">"(1) Are there unique challenges in multimodal reasoning that do not arise in text-only settings? (2) If so, how can we design a better RLVR algorithm grounded in multimodal principles?"</span>
+        In exploring the essential causes of failures in multimodal reasoning, we follow a typical GRPO pipeline to train Qwen2.5-VL-3B on ViRL39K and manually examine and categorize error types based on 200 error instances sampled from four benchmarks. We find that the majority of errors, <strong>67.0%</strong>, stem from poor perception. We hypothesize that this bottleneck in perception is due to the GRPO objective not providing any incentive for the model to generate visually grounded responses.
+      </p>
+    </div>
+  </section>
+
+  <!-- PAPO Algorithm Section -->
+  <section class="container">
+    <div class="section-card fade-in">
+      <h2 class="section-title">
+        <i class="fas fa-cogs" style="color: var(--primary-color); margin-right: 15px;"></i>
+        PAPO Algorithm
+      </h2>
+      
+      <div class="figure-container">
+        <img src="./static/images/method.png" alt="method overview" style="width: 940px; max-width: 100%;"/>
+        <div class="figure-caption"><strong>Figure 2:</strong> Overview of PAPO objective.</div>
+      </div>
+      
+      <p style="font-size: 1.1rem; line-height: 1.8; margin: 30px 0;">
+        We propose <strong>Perception-Aware Policy Optimization (PAPO)</strong>, a novel RLVR algorithm that enhances multimodal reasoning through visually grounded optimization. PAPO is a simple extension of GRPO that directly incorporates a perception-aware internal supervision signal into its training objective. Notably, <strong>PAPO does not rely on additional data curation, external reward models, or proprietary models.</strong>
+      </p>
+      
+      <div class="figure-container">
+        <img src="./static/images/method_objective.png" alt="objective comparison" style="width: 940px; max-width: 100%;"/>
+        <div class="figure-caption"><strong>Figure 3:</strong> Comparison of GRPO and PAPO objectives.</div>
+      </div>
+      
+      <div style="background: #f8fafc; padding: 25px; border-radius: 15px; margin: 30px 0; border-left: 5px solid var(--secondary-color);">
+        <h3 style="color: var(--secondary-color); margin-bottom: 15px;">Key Innovation: Implicit Perception Loss</h3>
+        <p style="line-height: 1.7;">
+          PAPO introduces an Implicit Perception Loss in the form of a KL divergence term that maximizes the difference between the model's output distribution when given the original image versus a corrupted (masked) version. This encourages the model to rely on meaningful visual content for generating responses, addressing the core perception bottleneck in multimodal reasoning.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Results Section -->
+  <section class="container">
+    <div class="section-card fade-in">
+      <h2 class="section-title">
+        <i class="fas fa-chart-line" style="color: var(--accent-color); margin-right: 15px;"></i>
+        Results
+      </h2>
+      
+      <div class="tab-container">
+        <div class="tab-buttons">
+          <button class="tab-button active" onclick="showTab('main-results')">Main Results</button>
+          <button class="tab-button" onclick="showTab('ablation')">Ablation Studies</button>
+          <button class="tab-button" onclick="showTab('no-kl')">Remove Reference KL</button>
+        </div>
+        
+        <div id="main-results" class="tab-content active">
+          <h3 class="section-subtitle">Main Results</h3>
+          <div class="figure-container">
+            <img src="./static/images/main_results.png" alt="main results" style="width: 1000px; max-width: 100%;"/>
+            <div class="figure-caption"><strong>Table 1:</strong> Performance (avg@8 acc %) comparison of Qwen2.5-VL-3B and 7B models between GRPO and PAPO on general and more vision-dependent multimodal reasoning tasks. MathVerseV refers to the vision-centric subset of MathVerse. PAPOH denotes the high KLprcp weighting (γ = 0.02) variant of PAPO (γ = 0.01). ∆%rel indicates the averaged relative gain over GRPO for each task. We observe consistent improvements with both PAPO and PAPOH, with gains approaching 8%, especially on heavily vision-dependent tasks.</div>
           </div>
-
-          <div class="is-size-5 publication-authors">
-            <span class="author-block"><sup>1</sup>University of Illinois Urbana-Champaign,</span>
-            <span class="author-block"><sup>2</sup>Alibaba Group</span>
-          </div>
-          <div class="is-size-5 publication-authors">
-            <span class="author-block"><sup>*</sup>Equal Contribution,</span>
-            <span class="author-block"><sup>†</sup>Corresponding Author</span>
-          </div>
-
-          <div class="column has-text-centered">
-            <div class="publication-links">
-              <!-- arxiv Link. -->
-              <span class="link-block">
-                <a href=""
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="ai ai-arxiv"></i>
-                  </span>
-                  <span>arXiv</span>
-                </a>
-              </span>
-              <!-- PDF Link. -->
-              <span class="link-block">
-                <a href=""
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="fas fa-file-pdf"></i>
-                  </span>
-                  <span>PDF</span>
-                </a>
-              </span>
-              <!-- Video Link. -->
-              <!-- <span class="link-block">
-                <a href="https://github.com/MikeWangWZHL/VDLM/raw/main/Mobile-Agent-E/static/videos/vdlm_teaser_vid.mp4"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="fab fa-youtube"></i>
-                  </span>
-                  <span>Video</span>
-                </a>
-              </span> -->
-              <!-- Code Link. -->
-              <span class="link-block">
-                <a href=""
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="fab fa-github"></i>
-                  </span>
-                  <span>Code (coming soon)</span>
-                  </a>
-              </span>
-              <!-- Model Link. -->
-              <!-- <span class="link-block">
-                <a href="https://huggingface.co/mikewang/PVD-160k-Mistral-7b"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <p style="font-size:18px">🤗</p>
-                  </span>
-                  <span>Model</span>
-                </a> -->
-              <!-- Dataset Link. -->
-              <span class="link-block">
-                <a href=""
-                class="external-link button is-normal is-rounded is-dark">
-                <span class="icon">
-                  <p style="font-size:18px">🤗</p>
-                </span>
-                <span>Model (coming soon)</span>
-                </a>
-              </span>
-              <!-- Demo link. -->
-              <!-- <span class="link-block">
-                <a href="https://github.com/MikeWangWZHL/VDLM/blob/main/demo.ipynb"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                    <p style="font-size:18px">🚀</p>
-                  </span>
-                  <span>Demo</span>
-                </a> -->
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 30px 0;">
+            <div style="background: var(--gradient-2); color: white; padding: 25px; border-radius: 15px; text-align: center;">
+              <div style="font-size: 2.5rem; font-weight: bold;">4.4%</div>
+              <div>Overall Improvement</div>
             </div>
+            <div style="background: var(--gradient-3); color: white; padding: 25px; border-radius: 15px; text-align: center;">
+              <div style="font-size: 2.5rem; font-weight: bold;">8.0%</div>
+              <div>Vision-Dependent Tasks</div>
+            </div>
+            <div style="background: var(--gradient-1); color: white; padding: 25px; border-radius: 15px; text-align: center;">
+              <div style="font-size: 2.5rem; font-weight: bold;">30.5%</div>
+              <div>Perception Error Reduction</div>
+            </div>
+          </div>
+          
+          <p style="font-size: 1.1rem; line-height: 1.8;">
+            PAPO consistently outperforms GRPO across all benchmarks, with particularly pronounced improvements on vision-dependent tasks. The results demonstrate that our simple yet effective approach successfully addresses the perception bottleneck in multimodal reasoning without requiring additional computational resources or external models.
+          </p>
+        </div>
+        
+        <div id="ablation" class="tab-content">
+          <h3 class="section-subtitle">Ablation Studies</h3>
+          
+          <h4 style="color: var(--secondary-color); margin: 25px 0 15px 0;">Impact of Implicit Perception Loss Weighting</h4>
+          <table class="interactive-table">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>General AVG</th>
+                <th>General Δ%rel</th>
+                <th>Vision AVG</th>
+                <th>Vision Δ%rel</th>
+                <th>Overall AVG</th>
+                <th>Overall Δ%rel</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>GRPO</strong></td>
+                <td>51.89</td>
+                <td>−</td>
+                <td>42.97</td>
+                <td>−</td>
+                <td>47.92</td>
+                <td>−</td>
+              </tr>
+              <tr>
+                <td>PAPO @0.005</td>
+                <td>52.40</td>
+                <td class="highlight">↑ 1.19</td>
+                <td>43.73</td>
+                <td class="highlight">↑ 1.92</td>
+                <td>48.55</td>
+                <td class="highlight">↑ 1.51</td>
+              </tr>
+              <tr>
+                <td>PAPO @0.01</td>
+                <td>52.53</td>
+                <td class="highlight">↑ 1.73</td>
+                <td>45.17</td>
+                <td class="highlight">↑ 4.52</td>
+                <td>49.26</td>
+                <td class="highlight">↑ 2.97</td>
+              </tr>
+              <tr>
+                <td>PAPO @0.02</td>
+                <td>53.39</td>
+                <td class="highlight">↑ 3.38</td>
+                <td>45.57</td>
+                <td class="highlight">↑ 5.60</td>
+                <td>49.92</td>
+                <td class="highlight">↑ 4.36</td>
+              </tr>
+              <tr style="background: #fee2e2;">
+                <td>PAPO @0.04 (collapsed)</td>
+                <td>31.24</td>
+                <td style="color: #dc2626;">↓ 43.15</td>
+                <td>38.31</td>
+                <td style="color: #dc2626;">↓ 14.09</td>
+                <td>34.38</td>
+                <td style="color: #dc2626;">↓ 28.46</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <h4 style="color: var(--secondary-color); margin: 25px 0 15px 0;">Impact of Masking Strategy and Ratio</h4>
+          <table class="interactive-table">
+            <thead>
+              <tr>
+                <th>Model Size</th>
+                <th>Method</th>
+                <th>General AVG</th>
+                <th>General Δ%rel</th>
+                <th>Vision AVG</th>
+                <th>Vision Δ%rel</th>
+                <th>Overall AVG</th>
+                <th>Overall Δ%rel</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background: #f1f5f9;">
+                <td rowspan="2"><strong>3B</strong></td>
+                <td>random @0.6</td>
+                <td>52.53</td>
+                <td class="highlight">↑ 1.73</td>
+                <td>45.17</td>
+                <td class="highlight">↑ 4.52</td>
+                <td>49.26</td>
+                <td class="highlight">↑ 2.97</td>
+              </tr>
+              <tr style="background: #f1f5f9;">
+                <td>semantic @0.6</td>
+                <td>52.13</td>
+                <td>↑ 0.34</td>
+                <td>43.78</td>
+                <td>↑ 1.88</td>
+                <td>48.42</td>
+                <td>↑ 1.02</td>
+              </tr>
+              <tr>
+                <td rowspan="2"><strong>7B</strong></td>
+                <td>random @0.6</td>
+                <td>63.56</td>
+                <td class="highlight">↑ 1.91</td>
+                <td>57.49</td>
+                <td class="highlight">↑ 5.37</td>
+                <td>60.86</td>
+                <td class="highlight">↑ 3.55</td>
+              </tr>
+              <tr>
+                <td>semantic @0.6</td>
+                <td>63.39</td>
+                <td>↑ 1.48</td>
+                <td>56.83</td>
+                <td>↑ 3.89</td>
+                <td>60.47</td>
+                <td>↑ 2.55</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <div style="background: #ecfdf5; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #10b981;">
+            <h4 style="color: #059669; margin-bottom: 10px;">Key Findings</h4>
+            <ul style="line-height: 1.7; margin-left: 20px;">
+              <li>Despite its simplicity, random masking empirically outperforms semantic-aware masking</li>
+              <li>A sufficiently large masking ratio (0.6-0.8) yields the best performance</li>
+              <li>Increasing γ up to 0.02 generally improves performance, while excessively large γ leads to model collapse</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div id="no-kl" class="tab-content">
+          <h3 class="section-subtitle">PAPO + Remove Reference KL</h3>
+          <table class="interactive-table">
+            <thead>
+              <tr>
+                <th>Model Size</th>
+                <th>Method</th>
+                <th>General AVG</th>
+                <th>General Δ%rel</th>
+                <th>Vision AVG</th>
+                <th>Vision Δ%rel</th>
+                <th>Overall AVG</th>
+                <th>Overall Δ%rel</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background: #f1f5f9;">
+                <td rowspan="3"><strong>3B</strong></td>
+                <td>GRPO</td>
+                <td>51.89</td>
+                <td>−</td>
+                <td>42.97</td>
+                <td>−</td>
+                <td>47.92</td>
+                <td>−</td>
+              </tr>
+              <tr style="background: #f1f5f9;">
+                <td>GRPO + No KLref</td>
+                <td>53.96</td>
+                <td>↑ 4.75</td>
+                <td>45.46</td>
+                <td>↑ 5.37</td>
+                <td>50.18</td>
+                <td>↑ 5.03</td>
+              </tr>
+              <tr style="background: #f1f5f9;">
+                <td><strong>PAPO + No KLref</strong></td>
+                <td>56.21</td>
+                <td class="highlight">↑ 9.26</td>
+                <td>49.33</td>
+                <td class="highlight">↑ 13.60</td>
+                <td>53.15</td>
+                <td class="highlight">↑ 11.19</td>
+              </tr>
+              <tr>
+                <td rowspan="3"><strong>7B</strong></td>
+                <td>GRPO</td>
+                <td>62.51</td>
+                <td>−</td>
+                <td>54.11</td>
+                <td>−</td>
+                <td>58.78</td>
+                <td>−</td>
+              </tr>
+              <tr>
+                <td>GRPO + No KLref</td>
+                <td>63.99</td>
+                <td>↑ 2.05</td>
+                <td>57.94</td>
+                <td>↑ 5.36</td>
+                <td>61.30</td>
+                <td>↑ 3.53</td>
+              </tr>
+              <tr>
+                <td><strong>PAPO + No KLref</strong></td>
+                <td>63.31</td>
+                <td class="highlight">↑ 1.15</td>
+                <td>59.18</td>
+                <td class="highlight">↑ 7.54</td>
+                <td>61.47</td>
+                <td class="highlight">↑ 3.99</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <p style="font-size: 1.1rem; line-height: 1.8; margin-top: 20px;">
+            Combining PAPO with removing the reference KL penalty leads to further improvements, particularly pronounced on 3B models with an average relative gain of over <strong>11%</strong>. The Double Entropy Loss becomes crucial in this setting to prevent KLprcp Hacking.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
 
+  <!-- Loss Hacking Analysis Section -->
+  <section class="container">
+    <div class="section-card fade-in">
+      <h2 class="section-title">
+        <i class="fas fa-brain" style="color: var(--secondary-color); margin-right: 15px;"></i>
+        Implicit Perception Loss Hacking Analysis
+      </h2>
+      
+      <p style="font-size: 1.1rem; line-height: 1.8; margin-bottom: 30px;">
+        We conduct a comprehensive analysis of KLprcp Hacking, a unique failure mode where the model over-optimizes the implicit perception loss, and propose effective mitigation strategies.
+      </p>
+      
+      <div class="tab-container">
+        <div class="tab-buttons">
+          <button class="tab-button active" onclick="showTab('collapse-behavior')">Collapsing Behavior</button>
+          <button class="tab-button" onclick="showTab('collapse-example')">Collapsing Behavior Example</button>
+          <button class="tab-button" onclick="showTab('early-signs')">Early Signs</button>
+          <button class="tab-button" onclick="showTab('influential-factors')">Influential Factors</button>
+          <button class="tab-button" onclick="showTab('prevention')">Prevention Methods</button>
+        </div>
+        
+        <div id="collapse-behavior" class="tab-content active">
+          <h3 class="section-subtitle">Collapsing Behavior</h3>
+          <div class="figure-container">
+            <img src="./static/images/collapse_behavior.png" alt="collapsing behavior analysis" style="width: 100%; max-width: 800px;"/>
+            <div class="figure-caption"><strong>Figure 4:</strong> Collapsing behavior. A distinctive generation pattern in collapsed models is the production of irrelevant tokens. We verify this quantitatively by prompting GPT-4.1-mini to provide relatedness scores of the responses from 0 to 10 for GRPO and collapsed PAPO 7B model. We further compare the variance of KLprcp over the response tokens. As illustrated, the collapsed PAPO model exhibits significantly lower relatedness scores and higher variance across tokens in KLprcp.</div>
+          </div>
+          <p style="line-height: 1.8; margin-top: 20px;">
+            Collapsed models exhibit significantly degraded coherence, with relatedness scores approximately <strong>18% lower</strong> than baseline models. The variance in KLprcp loss across response tokens is about <strong>8.4 times higher</strong>, indicating that the model learns to exploit the objective by generating highly unpredictable token sequences.
+          </p>
+        </div>
+        
+        <div id="collapse-example" class="tab-content">
+          <h3 class="section-subtitle">Collapsing Behavior Example</h3>
+          
+          <div class="figure-container">
+            <img src="./static/images/collapse_behavior_unrelated_example.png" alt="collapsing behavior example" style="width: 100%; max-width: 400px;"/>
+            <div class="figure-caption"><strong>Example:</strong> Demonstration of how collapsed models generate unrelated tokens during reasoning.</div>
+          </div>
+          
+          <div style="background: #f8fafc; padding: 25px; border-radius: 15px; margin: 20px 0; border-left: 5px solid var(--secondary-color);">
+            <h4 style="color: var(--secondary-color); margin-bottom: 15px;">
+              <i class="fas fa-calculator"></i> Concrete Example: Find x
+            </h4>
+            <div style="background: #1f2937; color: #e5e7eb; padding: 20px; border-radius: 10px; font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.6;">
+              <div style="color: #10b981; margin-bottom: 5px;"><strong>Question:</strong> Find x.</div>
+              <div style="color: #f59e0b; margin-bottom: 20px;"><strong>Ground Truth:</strong> √21</div>
+              
+              <div style="margin-bottom: 20px;">
+                <div style="color: #ef4444; font-weight: bold; margin-bottom: 10px;">❌ Collapsed Model Output:</div>
+                <div style="background: #fee2e2; color: #dc2626; padding: 15px; border-radius: 8px; border-left: 4px solid #dc2626;">
+                  <div style="margin-bottom: 10px;">&lt;think&gt; In a right triangle, the Pythagorean theorem can be used to find the length of the hypotenuse. The theorem states that in a right triangle, the square of the length of the hypotenuse (the side opposite the right angle) is equal to the sum of the squares of the lengths of the other two sides. Here, the sides are 2, 5, and x. The side x is the hypotenuse because it is the longest side and the angle between the sides of 2 and 5 is a right angle. So, according to the Pythagorean theorem: x² = 2² + 5² = 4 + 25 = 29, x = √29. Therefore, the value of x is √29.&lt;/think&gt;</div>
+                  <div style="color: #7f1d1d; font-size: 0.85rem; background: #fecaca; padding: 10px; border-radius: 6px;">
+                    \boxed{ \@ifundefined{FontU}{}{ \ifCLASSOPTIONcaptionscolor\colorbox{blue!10!white}{\normalfont$29$}% \else\@ifundefined{color}{\normalfont$29$}{\normalfont$29$}% \fi }@ The final answer is \boxed{ \@ifundefined{FontU}{}{ \ifCLASSOPTIONcaptionscolor\colorbox{blue!10!white}{\normalfont$x = \sqrt{29}$}% \else\@ifundefined{color}{\normalfont$x = \sqrt{29}$}{\normalfont$x = \sqrt{29}$}% \fi }@} However, the correct final answer without the box is \boxed{ \@ifundefined{FontU}{}{ \ifCLASSOPTIONcaptionscolor\colorbox{blue!10!white}{\normalfont$x = \sqrt{29}$}% \else\@ifundefined{color}{\normalfont$x = \sqrt{29}$}{\normalfont$x = \sqrt{29}$}% \fi }@} ...
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <div style="color: #34d399; font-weight: bold; margin-bottom: 10px;">✅ No Collapse (Correct) Output:</div>
+                <div style="background: #ecfdf5; color: #059669; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981;">
+                  <div style="margin-bottom: 10px;">&lt;think&gt; In a right triangle, according to the Pythagorean theorem, the square of the hypotenuse is equal to the sum of the squares of the two right-angled sides. Here, the hypotenuse is 5, and one right-angle side is 2 and the other is x. Therefore: 5² = 2² + x², x = √21 &lt;/think&gt;</div>
+                  <div style="color: #065f46; font-weight: bold;">
+                    \boxed{√21}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: #fef3c7; border-radius: 10px; border-left: 4px solid #d97706;">
+              <p style="color: #92400e; margin: 0; line-height: 1.6;">
+                <strong>Key Observation:</strong> The collapsed model generates extensive unrelated LaTeX formatting tokens and repetitive content, demonstrating how KLprcp hacking leads to degraded output quality and coherence.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div id="early-signs" class="tab-content">
+          <h3 class="section-subtitle">Early Signs of Collapse</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 25px 0;">
+            <div style="background: #fee2e2; padding: 20px; border-radius: 12px; text-align: center;">
+              <i class="fas fa-arrow-down" style="font-size: 2rem; color: #dc2626; margin-bottom: 10px;"></i>
+              <div style="font-weight: bold; color: #dc2626;">Implicit Perception Loss</div>
+              <div style="font-size: 0.9rem;">Drastic decrease</div>
+            </div>
+            <div style="background: #fef3c7; padding: 20px; border-radius: 12px; text-align: center;">
+              <i class="fas fa-chart-line" style="font-size: 2rem; color: #d97706; margin-bottom: 10px;"></i>
+              <div style="font-weight: bold; color: #d97706;">Clipping Ratio-High</div>
+              <div style="font-size: 0.9rem;">Continuously increases</div>
+            </div>
+            <div style="background: #dbeafe; padding: 20px; border-radius: 12px; text-align: center;">
+              <i class="fas fa-arrow-up" style="font-size: 2rem; color: #2563eb; margin-bottom: 10px;"></i>
+              <div style="font-weight: bold; color: #2563eb;">Entropy Loss</div>
+              <div style="font-size: 0.9rem;">Increases in both policies</div>
+            </div>
+          </div>
+        </div>
+        
+        <div id="influential-factors" class="tab-content">
+          <h3 class="section-subtitle">Influential Factors</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 25px 0;">
+            <div style="background: #f8fafc; border: 2px solid var(--border-color); padding: 20px; border-radius: 12px;">
+              <h4 style="color: var(--secondary-color); margin-bottom: 15px;">
+                <i class="fas fa-weight-hanging"></i> Loss Weighting (γ)
+              </h4>
+              <p>Higher KLprcp weighting (e.g., 0.04) is more likely to lead to collapse. We recommend γ ≤ 0.02 for safe training.</p>
+            </div>
+            <div style="background: #f8fafc; border: 2px solid var(--border-color); padding: 20px; border-radius: 12px;">
+              <h4 style="color: var(--secondary-color); margin-bottom: 15px;">
+                <i class="fas fa-expand-arrows-alt"></i> Model Size
+              </h4>
+              <p>Larger models (7B) are more sensitive to hacking under the same configuration compared to smaller models (3B).</p>
+            </div>
+            <div style="background: #f8fafc; border: 2px solid var(--border-color); padding: 20px; border-radius: 12px;">
+              <h4 style="color: var(--secondary-color); margin-bottom: 15px;">
+                <i class="fas fa-mask"></i> Masking Ratio
+              </h4>
+              <p>Extreme masking ratios (e.g., 1.0 - complete blackening) lead to faster collapse compared to moderate ratios (0.6-0.8).</p>
+            </div>
+          </div>
+        </div>
+        
+        <div id="prevention" class="tab-content">
+          <h3 class="section-subtitle">Prevention Methods</h3>
+          <table class="interactive-table">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>General AVG</th>
+                <th>General Δ%rel</th>
+                <th>Vision AVG</th>
+                <th>Vision Δ%rel</th>
+                <th>Overall AVG</th>
+                <th>Overall Δ%rel</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>GRPO</strong></td>
+                <td>62.51</td>
+                <td>−</td>
+                <td>54.11</td>
+                <td>−</td>
+                <td>58.78</td>
+                <td>−</td>
+              </tr>
+              <tr>
+                <td>PAPOH w/ Inc KLref</td>
+                <td>63.14</td>
+                <td>↑ 1.12</td>
+                <td>57.03</td>
+                <td>↑ 3.99</td>
+                <td>60.42</td>
+                <td>↑ 2.40</td>
+              </tr>
+              <tr>
+                <td>PAPOH w/ Single Ent</td>
+                <td>63.34</td>
+                <td>↑ 1.53</td>
+                <td>58.36</td>
+                <td>↑ 5.96</td>
+                <td>61.12</td>
+                <td>↑ 3.50</td>
+              </tr>
+              <tr style="background: #ecfdf5;">
+                <td><strong>PAPOH w/ Double Ent</strong></td>
+                <td>63.50</td>
+                <td class="highlight">↑ 1.53</td>
+                <td>59.37</td>
+                <td class="highlight">↑ 7.96</td>
+                <td>61.66</td>
+                <td class="highlight">↑ 4.39</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <div style="background: #ecfdf5; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #10b981;">
+            <h4 style="color: #059669; margin-bottom: 15px;">
+              <i class="fas fa-shield-alt"></i> Recommended Solution: Double Entropy Loss
+            </h4>
+            <p style="line-height: 1.7;">
+              Among the tested regularization methods, <strong>Double Entropy Loss</strong> achieves the best overall improvement of 4.4% while successfully preventing collapse. This method encourages the model to keep both the original and masked policy entropies low, providing effective regularization against KLprcp hacking.
+            </p>
           </div>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-
-<!-- Abstract -->
-<section class="section">
-  <div class="container is-max-desktop">
-    <!-- Abstract. -->
-    <div class="columns is-centered has-text-centered">
-      <div class="column is-full-width">
-        <h2 class="title is-3">Abstract</h2>
-        <div class="content has-text-justified">
-          <p>
-            Reinforcement Learning with Verifiable Rewards (RLVR) has proven to be a highly effective strategy for endowing Large Language Models (LLMs) with robust multi-step reasoning abilities. However, its design and optimizations remain tailored to purely textual domains, resulting in suboptimal performance when applied to multimodal reasoning tasks. In particular, we observe that a major source of error in current multimodal reasoning lies in the perception of visual inputs.
-            To address this bottleneck, we propose Perception-Aware Policy Optimization (PAPO), a simple yet effective extension of GRPO that encourages the model to learn to perceive while learning to reason. Notably, PAPO does not rely on additional data curation, external reward models, or proprietary models.
-            Specifically, we introduce the Implicit Perception Loss in the form of a KL divergence term to the GRPO objective, which, despite its simplicity, yields significant overall improvements (4.4%) on diverse multimodal benchmarks. The improvements are more pronounced, up to 8.0%, on heavily vision-dependent tasks. We also observe a substantial reduction (30.5%) in perception errors, indicating improved perceptual capabilities with PAPO. We conduct comprehensive analysis of PAPO and identify a unique loss hacking issue, which we rigorously analyze and mitigate through a Double Entropy Loss.
-            Overall, our work introduces a deeper integration of perception-aware supervision into RLVR learning objectives and lays the groundwork for a new RL framework that encourages visually grounded reasoning.
-          </p>
+  <!-- Resources Section -->
+  <section class="container">
+    <div class="section-card fade-in">
+      <h2 class="section-title">
+        <i class="fas fa-download" style="color: var(--accent-color); margin-right: 15px;"></i>
+        Resources
+      </h2>
+      
+      <div class="resource-grid">
+        <div class="resource-card">
+          <div class="icon">
+            <i class="fab fa-github"></i>
+          </div>
+          <h3 style="margin-bottom: 15px; color: var(--text-primary);">Code Repository</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 20px;">Complete implementation of PAPO algorithm with training scripts and evaluation tools.</p>
+          <a href="" class="button" style="background: var(--secondary-color); color: white; border: none;">
+            <i class="fas fa-code"></i>
+            <span>GitHub</span>
+          </a>
         </div>
-        <!-- <figure>
-          <img src="" alt="teaser." class="teaser"/>
-          <figcaption class="has-text-centered">
-            <b>Figure 1:</b> 
-        </figure> -->
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="section">
-  <div class="container is-max-desktop">
-    <div class="columns is-centered">
-      <div class="column is-full-width">
-        <h2 class="title is-3">Perception Bottleneck in Multimodal Reasoning</h2>
-        <br>
-        <div style="text-align: center;">
-          <figure id="teaser">
-              <img src="./static/images/teaser.png" alt="teaser" class="teaser" style="width: 800px;"/>
-              <figcaption class="has-text-centered"><b>Figure 1:</b> Comprehensive error-type breakdown and inference example between GRPO and PAPO.</figcaption>
-          </figure>
-        </div>
-        <br>
-        <p>
-            We first investigate the question: <em>Are there unique challenges in multimodal reasoning that do not arise in text-only settings?</em> We follow a typical <a href="https://github.com/hiyouga/EasyR1">GRPO</a> pipeline to train <a href="https://huggingface.co/collections/Qwen/qwen25-vl-6795ffac22b334a837c0f9a5">Qwen2.5-VL-3B</a> on <a href="https://huggingface.co/datasets/TIGER-Lab/ViRL39K">ViRL39K</a> and manually examine and categorize error types based on 200 error instances sampled from four benchmarks. To our surprise, we find that the majority of errors, 67.0%, stem from poor perception. We hypothesize that this bottleneck in perception is due to the GRPO objective not providing any incentive for the model to generate visually grounded responses.
-        </p>
-  </div>
-</section>
-
-
-<section class="section">
-  <div class="container is-max-desktop">
-    <div class="columns is-centered">
-      <div class="column is-full-width">
-        <h2 class="title is-3">PAPO Algorithm</h2>
-        <br>
-        <div style="text-align: center;">
-          <figure id="teaser">
-              <img src="./static/images/method.png" alt="teaser" class="teaser" style="width: 940px;"/>
-              <figcaption class="has-text-centered"><b>Figure 2:</b> Overview of PAPO objective.</figcaption>
-          </figure>
-        </div>
-        <br>
-        <p>
-          We propose <b>Perception-Aware Policy Optimization (PAPO)</b>, a novel RLVR algorithm that enhances multimodal reasoning through visually grounded optimization. PAPO is a simple extension of GRPO that directly incorporates a perception-aware <b>internal supervision signal</b> into its training objective. Notably,  <b>PAPO does not rely on additional data curation, external reward models, or proprietary models.</b>
-        </p>
-        <br>
-        <div style="text-align: center;">
-          <figure id="teaser">
-            <img src="./static/images/method_objective.png" alt="teaser" class="teaser" style="width: 940px;"/>
-            <figcaption class="has-text-centered"><b>Figure 3:</b> Comparison of GRPO and PAPO objectives.</figcaption>
-          </figure>
-        </div>
-        <br>
-        <p>
-          TODO: Add more details about the objectives here...
-        </p>
-  </div>
-</section>
-
-
-<section class="section">
-  <div class="container is-max-desktop">
-    <div class="columns is-centered">
-      <div class="column is-full-width">
-        <h2 class="title is-3">Results</h2>
-        <h3 class="title is-5">Main Results</h3>
-
-        <div style="text-align: center;">
-          <figure id="teaser">
-              <img src="./static/images/main_results.png" alt="teaser" class="teaser" style="width: 1000px;"/>
-              <figcaption class="has-text-centered"><b>Table 1:</b> TODO: copy the caption.</figcaption>
-          </figure>
-        </div>
-        <p>
-          TODO: Add some analysis here, such as more pronounced on vision-dependent tasks.
-        </p>
-        <br>
-        <h3 class="title is-5">PAPO + Remove Reference KL</h3>
-        <p>
-          TODO: Add table; Add results here...
-        </p>
-  </div>
-</section>
-
-
-
-<section class="section">
-  <div class="container is-max-desktop">
-    <div class="columns is-centered">
-      <div class="column is-full-width">
-        <h2 class="title is-3">Ablation Study</h2>
-        <h3 class="title is-5">Impact of Implicit Perception Loss Weighting</h3>
-        <p>
-          TODO: Add table; Add results here...
-        </p>
-        <br>
-        <h3 class="title is-5">Impact of Masking Strategy</h3>
-        <p>
-          TODO: Add table; Add table; Add results here...
-        </p>
-  </div>
-</section>
-
-
-<section class="section">
-  <div class="container is-max-desktop">
-    <div class="columns is-centered">
-      <div class="column is-full-width">
-        <h2 class="title is-3">Implicit Perception Loss Hacking</h2>
-        <p>
-          TODO: explain what is the hacking
-        </p>
         
-        <br>
-        <h3 class="title is-5">Collapsing Behavior</h3>
-        <p>
-          TODO:
-        </p>
-
-        <br>
-        <h3 class="title is-5">Early Signs</h3>
-        <p>
-          TODO:
-        </p>
+        <div class="resource-card">
+          <div class="icon">
+            <i class="fas fa-robot"></i>
+          </div>
+          <h3 style="margin-bottom: 15px; color: var(--text-primary);">Pre-trained Models</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 20px;">Qwen2.5-VL models (3B and 7B) fine-tuned with PAPO for multimodal reasoning tasks.</p>
+          <a href="" class="button" style="background: var(--accent-color); color: white; border: none;">
+            <i class="fas fa-download"></i>
+            <span>Hugging Face</span>
+          </a>
+        </div>
         
-        <br>
-        <h3 class="title is-5">Influential Factors</h3>
-        <p>
-          TODO:
-        </p>
-        
-        <br>
-        <h3 class="title is-5">How To Prevent?</h3>
-        <p>
-          TODO:
-        </p>
-  </div>
-</section>
-
-
-
-
-<section class="section">
-  <div class="container is-max-desktop">
-    <div class="columns is-centered">
-      <div class="column is-full-width">
-        <h2 class="title is-3">Resources</h2>
-
-        <p>
-          🍉 <a href=""> <b>PAPO Code (coming soon)</b> </a>
-        </p>        
-        <p>
-          🤗 <a href=""><b>Models (coming soon)</b></a>
-        </p>
-        
-  </div>
-</section>
-
-
-
-<section class="section" id="BibTeX">
-  <div class="container is-max-desktop content">
-    <h2 class="title">BibTeX</h2>
-    <pre><code>
-    
-    </code></pre>
-  </div>
-</section>
-
-
-<footer class="footer">
-  <div class="container">
-    <!-- <div class="content has-text-centered">
-      <a class="icon-link"
-      href="">
-      <i class="fas fa-file-pdf"></i>
-    </a>
-    <a class="icon-link" href="https://github.com/mikewangwzhl" class="external-link" disabled>
-      <i class="fab fa-github"></i>
-    </a>
-  </div> -->
-  <div class="content has-text-centered">
-    <div class="columns is-centered">
-      <div class="column is-8">
-        <div class="content">
-          <!-- <p>
-            This website is licensed under a <a rel="license"
-                                                href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
-            Commons Attribution-ShareAlike 4.0 International License</a>.
-          </p> -->
-          <p>
-            This website's template is borrowed from <a
-              href="https://github.com/nerfies/nerfies.github.io">nerfies</a>. We thank the authors for open-sourcing their code.
-          </p>
+        <div class="resource-card">
+          <div class="icon">
+            <i class="fas fa-file-pdf"></i>
+          </div>
+          <h3 style="margin-bottom: 15px; color: var(--text-primary);">Research Paper</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 20px;">Detailed technical paper with comprehensive experiments and analysis.</p>
+          <a href="" class="button" style="background: var(--primary-color); color: white; border: none;">
+            <i class="fas fa-file-pdf"></i>
+            <span>arXiv Paper</span>
+          </a>
         </div>
       </div>
     </div>
-  </div>
-</footer>
+  </section>
 
+  <!-- Citation Section -->
+  <section class="container">
+    <div class="section-card fade-in">
+      <h2 class="section-title">
+        <i class="fas fa-quote-left" style="color: var(--secondary-color); margin-right: 15px;"></i>
+        Citation
+      </h2>
+      
+      <div style="background: #1e293b; color: #e2e8f0; padding: 25px; border-radius: 12px; font-family: 'Courier New', monospace; position: relative; overflow-x: auto;">
+        <button onclick="copyBibtex()" style="position: absolute; top: 15px; right: 15px; background: var(--secondary-color); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+          <i class="fas fa-copy"></i> Copy
+        </button>
+        <pre id="bibtex-content" style="margin: 0; line-height: 1.6; font-size: 0.95rem;">@article{wang2025papo,
+  title={PAPO: Perception-Aware Policy Optimization for Multimodal Reasoning},
+  author={Wang, Zhenhailong and Guo, Xuehang and Stoica, Sofia and Xu, Haiyang and Wang, Hongru and Ha, Hyeonjeong and Chen, Xiusi and Chen, Yangyi and Yan, Ming and Huang, Fei and Ji, Heng},
+  journal={arXiv preprint arXiv:XXXX.XXXXX},
+  year={2025}
+}</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer style="background: var(--text-primary); color: white; padding: 40px 0; margin-top: 60px;">
+    <div class="container" style="text-align: center;">
+      <p style="margin-bottom: 15px;">
+        This website's template is inspired by <a href="https://github.com/nerfies/nerfies.github.io" style="color: var(--accent-color);">nerfies</a>. 
+        We thank the authors for open-sourcing their code.
+      </p>
+      <p style="opacity: 0.7; font-size: 0.9rem;">
+        © 2025 PAPO Team. All rights reserved.
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // Scroll indicator
+    window.addEventListener('scroll', () => {
+      const scrollTop = document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollPercent = (scrollTop / scrollHeight) * 100;
+      document.getElementById('scrollIndicator').style.width = scrollPercent + '%';
+    });
+
+    // Fade in animation on scroll
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.fade-in').forEach(el => {
+      observer.observe(el);
+    });
+
+    // Tab functionality
+    function showTab(tabId) {
+      // Hide all tab contents
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      // Remove active class from all buttons
+      document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active');
+      });
+      
+      // Show selected tab content
+      document.getElementById(tabId).classList.add('active');
+      
+      // Add active class to clicked button
+      event.target.classList.add('active');
+    }
+
+    // Copy bibtex functionality
+    function copyBibtex() {
+      const bibtexContent = document.getElementById('bibtex-content').textContent;
+      navigator.clipboard.writeText(bibtexContent).then(() => {
+        // Show feedback
+        const button = event.target.closest('button');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        button.style.background = '#10b981';
+        
+        setTimeout(() => {
+          button.innerHTML = originalText;
+          button.style.background = 'var(--secondary-color)';
+        }, 2000);
+      });
+    }
+
+    // Table row hover effects
+    document.querySelectorAll('.interactive-table tbody tr').forEach(row => {
+      row.addEventListener('mouseenter', () => {
+        row.style.background = '#f1f5f9';
+      });
+      
+      row.addEventListener('mouseleave', () => {
+        if (!row.style.backgroundColor || row.style.backgroundColor === 'rgb(241, 245, 249)') {
+          row.style.background = '';
+        }
+      });
+    });
+
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+
+    // Add loading state to buttons
+    document.querySelectorAll('.button').forEach(button => {
+      if (button.textContent.includes('coming soon')) {
+        button.addEventListener('click', (e) => {
+          e.preventDefault();
+          const originalContent = button.innerHTML;
+          button.innerHTML = '<div class="loading"></div> Loading...';
+          button.style.pointerEvents = 'none';
+          
+          setTimeout(() => {
+            button.innerHTML = originalContent;
+            button.style.pointerEvents = 'auto';
+          }, 2000);
+        });
+      }
+    });
+
+    // Parallax effect for hero section
+    window.addEventListener('scroll', () => {
+      const scrolled = window.pageYOffset;
+      const hero = document.querySelector('.hero');
+      if (hero && scrolled < hero.offsetHeight) {
+        hero.style.transform = `translateY(${scrolled * 0.5}px)`;
+      }
+    });
+  </script>
 </body>
 </html>
