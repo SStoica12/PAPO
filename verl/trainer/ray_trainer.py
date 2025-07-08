@@ -137,6 +137,7 @@ def apply_kl_contrastive(
     kl_penalty_contrastive="kl",
     kl_prcp_apply_mode="all",
 ):
+    # not used in GRPO
     batch_size = data.batch.batch_size[0]
     response_mask = data.batch["response_mask"]
     
@@ -608,15 +609,18 @@ class RayPPOTrainer:
 
                 metrics, timing_raw = {}, {}
                 batch: DataProto = DataProto.from_single_dict(batch_dict)
+                
+                
+                ## get the corrupted images for KL_prcp
                 if self.config.algorithm.use_kl_prcp and "multi_modal_data" in batch.non_tensor_batch.keys():
                     # take the raw PIL images
                     aug_multi_modal_data = []
                     aug_multi_modal_inputs = []
                     for item in batch.non_tensor_batch["multi_modal_data"]:
                         if "image_aug" in item:
-                            # use pre-augmented images
+                            # use pre-augmented images (preprocessed for semantic-aware masking)
                             aug_images_pil = item.pop('image_aug')  # a list
-                        else: # online random augmentation 
+                        else: # online random masking
                             original_images_pil = item['image'] # a list
                             aug_images_pil = self._aug_img_for_kl_prcp(original_images_pil)
                         aug_multimodal_input = self.processor(aug_images_pil, ["dummy prompt"], add_special_tokens=False, return_tensors="pt")
@@ -686,7 +690,7 @@ class RayPPOTrainer:
                     if self.config.algorithm.use_kl_prcp:
                         # store acc reward in batch
                         batch = self._get_kl_prcp_weights(batch, reward_metrics)
-                        # store contrastive kl coef in batch
+                        # store kl_prcp coef in batch
                         batch = self._get_kl_prcp_coef(batch)
                     
                     if self.config.algorithm.use_sft_loss:

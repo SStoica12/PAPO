@@ -286,13 +286,14 @@ class DataParallelPPOActor(BasePPOActor):
                         metrics["actor/kl_loss"] = kl_loss.detach().item()
                         metrics["actor/kl_coef"] = self.config.kl_coef
                     
-                    discount_ratio = 1.0 # for entropy losses; maybe updated by annealing in contrastive kl enabled settings
+                    discount_ratio = 1.0 # for entropy losses; maybe updated by annealing kl_prcp settings
                     
-                    # for contrastive kl
+                    # for kl_prcp
                     if "aug_log_probs" in model_inputs:
                         aug_log_probs = model_inputs["aug_log_probs"]
                         aug_entropy_loss = -VF.masked_mean(aug_log_probs, response_mask)  # estimator of entropy loss
-                        # compute kl loss
+                        
+                        # compute kl_prcp
                         aug_kld = core_algos.compute_kl(
                             log_probs=log_probs,
                             ref_log_probs=aug_log_probs,
@@ -304,6 +305,7 @@ class DataParallelPPOActor(BasePPOActor):
                         kl_prcp_weighting = kl_prcp_weighting.unsqueeze(1) # (bsz, 1)
                         aug_kld = aug_kld * kl_prcp_weighting
 
+                        # if add additional token-level masking
                         if self.config.use_kl_prcp_token_level_mask:
                             top_p = self.config.kl_prcp_token_level_mask_top_p
                             assert top_p > 0.0 and top_p < 1.0, "top_p must be in (0, 1) for token-level masking"
@@ -311,14 +313,15 @@ class DataParallelPPOActor(BasePPOActor):
                             valid_mask = response_mask.bool()                     # (bsz, resp_len)
                             masked_kld = aug_kld.masked_fill(~valid_mask, float("nan"))
                             thresh = torch.nanquantile(masked_kld, 1.0 - top_p, dim=1, keepdim=True)
-                            token_mask = aug_kld >= thresh                    # (bsz, resp_len)  bool
+                            token_mask = aug_kld >= thresh          # (bsz, resp_len)  bool
                             # Apply the mask (cast to same dtype)
                             aug_kld = aug_kld * token_mask.to(aug_kld.dtype)
 
-                        # try kl_prcp clipping
+                        # if add kl_prcp clipping
                         if self.config.use_kl_prcp_clipping:
                             aug_kld = torch.clamp(aug_kld, min=0.0, max=self.config.kl_prcp_clipping)
 
+                        # kl_prcp loss
                         kl_prcp_loss = VF.masked_mean(aug_kld, response_mask)
 
                         if kl_prcp_coef is None:
@@ -332,7 +335,7 @@ class DataParallelPPOActor(BasePPOActor):
 
                         pg_loss = pg_loss - kl_prcp_loss * kl_prcp_coef
 
-                        # try adding additional entropy loss on aug probs
+                        # if adding masked entropy loss
                         if self.config.use_aug_entropy_loss:
                             pg_loss = pg_loss + self.config.aug_entropy_loss_coef * discount_ratio * aug_entropy_loss
 
@@ -347,8 +350,7 @@ class DataParallelPPOActor(BasePPOActor):
                         metrics["actor/ori_entropy_loss"] = entropy_loss.detach().item()
                         metrics["actor/ori_entropy_loss_coef"] = self.config.ori_entropy_loss_coef
 
-                    
-                    # for sft loss
+                    # if adding additional sft loss on correct rollouts
                     if self.config.use_sft_loss:
                         assert correctness_mult_mask is not None, "correctness_mult_mask must be provided when use_sft_loss is True"
                         correctness_mult_mask = torch.tensor(correctness_mult_mask, device=log_probs.device, dtype=log_probs.dtype) # (bsz,) 0.0 or 1.0
@@ -363,6 +365,7 @@ class DataParallelPPOActor(BasePPOActor):
                         metrics["actor/sft_loss"] = sft_loss.detach().item()
                         metrics["actor/sft_coef"] = sft_coef
 
+                    # final pg loss
                     loss = pg_loss / gradient_accumulation
                     loss.backward()
 
