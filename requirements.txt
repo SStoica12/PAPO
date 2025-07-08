@@ -1,0 +1,34 @@
+# Core dependencies
+vllm==0.8.4
+accelerate
+codetiming
+datasets
+liger-kernel
+mathruler
+numpy
+omegaconf
+pandas
+peft
+pillow
+pyarrow>=15.0.0
+pylatexenc
+qwen-vl-utils
+tensordict
+torchdata
+wandb
+
+# Attention and compute optimization
+flash-attn
+--extra-index-url https://flashinfer.ai/whl/cu124/torch2.6/
+flashinfer-python
+
+# Logging and monitoring
+tensorboard
+
+# Transformers
+transformers==4.51.3
+
+# PyTorch (usually installed via conda, but included for completeness)
+torch
+torchvision
+torchaudio
