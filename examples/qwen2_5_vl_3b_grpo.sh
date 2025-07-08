@@ -14,7 +14,7 @@ MAX_PROMPT_LENGTH=4096
 
 EXP_NAME="qwen2_5_vl_3b__grpo__ep${TOTAL_EPOCHES}_rb${ROLLOUT_BATCH_SIZE}_gb${GLOBAL_BATCH_SIZE}"
 
-CONGI_FILE="examples/configs/config_papo.yaml"
+CONGI_FILE="examples/configs/config_grpo.yaml"
 TRAIN_FILE="PAPO/papo_virl39k_train"
 VAL_FILE="PAPO/papo_mm_eureka_test"
 

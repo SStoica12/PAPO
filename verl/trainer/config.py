@@ -77,29 +77,32 @@ class AlgorithmConfig:
     kl_type: str = "fixed"
     kl_horizon: float = 0.0
     kl_target: float = 0.0
-    use_contrastive_kl: bool = False
+    use_kl_prcp: bool = False
     contrastive_type: str = "augmented"
-    contrastive_kl_schedule: str = "fixed"
-    contrastive_kl_schedule_args: Dict[str, Any] = field(default_factory=dict)
-    contrastive_kl_penalty: str = "kl"
-    contrastive_kl_coef: float = 1e-3
-    contrastive_kl_apply_mode: str = "all"
+    kl_prcp_schedule: str = "fixed"
+    kl_prcp_schedule_args: Dict[str, Any] = field(default_factory=dict)
+    kl_prcp_penalty: str = "kl"
+    kl_prcp_coef: float = 1e-3
+    kl_prcp_apply_mode: str = "all"
     aug_config: Dict[str, Any] = field(default_factory=dict)
     incorrect_weighting: float = 0.1
 
+    
+    # Double Entropy Loss
     use_aug_entropy_loss: bool = False
-    aug_entropy_loss_coef: float = 1e-2
+    aug_entropy_loss_coef: float = 0.03
 
     use_ori_entropy_loss: bool = False
-    ori_entropy_loss_coef: float = 1e-2
+    ori_entropy_loss_coef: float = 0.03
     
-    use_contrastive_kl_clipping: bool = False
-    contrastive_kl_clipping: float = 0.2
 
-    use_contrastive_kl_token_level_mask: bool = False
-    contrastive_kl_token_level_mask_top_p: float = 0.2
+    # Other experimental settings    
+    use_kl_prcp_clipping: bool = False
+    kl_prcp_clipping: float = 0.2
 
-    # custom for use sft loss
+    use_kl_prcp_token_level_mask: bool = False
+    kl_prcp_token_level_mask_top_p: float = 0.2
+
     use_sft_loss: bool = False
     sft_loss_coef: float = 1e-3
 
@@ -147,18 +150,18 @@ class PPOConfig:
         self.worker.actor.use_kl_loss = self.algorithm.use_kl_loss
         self.worker.actor.kl_penalty = self.algorithm.kl_penalty
         self.worker.actor.kl_coef = self.algorithm.kl_coef
-        self.worker.actor.use_contrastive_kl = self.algorithm.use_contrastive_kl
-        self.worker.actor.contrastive_kl_penalty = self.algorithm.contrastive_kl_penalty
-        self.worker.actor.contrastive_kl_coef = self.algorithm.contrastive_kl_coef
-        self.worker.actor.contrastive_kl_apply_mode = self.algorithm.contrastive_kl_apply_mode
+        self.worker.actor.use_kl_prcp = self.algorithm.use_kl_prcp
+        self.worker.actor.kl_prcp_penalty = self.algorithm.kl_prcp_penalty
+        self.worker.actor.kl_prcp_coef = self.algorithm.kl_prcp_coef
+        self.worker.actor.kl_prcp_apply_mode = self.algorithm.kl_prcp_apply_mode
         self.worker.actor.use_aug_entropy_loss = self.algorithm.use_aug_entropy_loss
         self.worker.actor.aug_entropy_loss_coef = self.algorithm.aug_entropy_loss_coef
         self.worker.actor.use_ori_entropy_loss = self.algorithm.use_ori_entropy_loss
         self.worker.actor.ori_entropy_loss_coef = self.algorithm.ori_entropy_loss_coef
-        self.worker.actor.use_contrastive_kl_clipping = self.algorithm.use_contrastive_kl_clipping
-        self.worker.actor.contrastive_kl_clipping = self.algorithm.contrastive_kl_clipping
-        self.worker.actor.use_contrastive_kl_token_level_mask = self.algorithm.use_contrastive_kl_token_level_mask
-        self.worker.actor.contrastive_kl_token_level_mask_top_p = self.algorithm.contrastive_kl_token_level_mask_top_p
+        self.worker.actor.use_kl_prcp_clipping = self.algorithm.use_kl_prcp_clipping
+        self.worker.actor.kl_prcp_clipping = self.algorithm.kl_prcp_clipping
+        self.worker.actor.use_kl_prcp_token_level_mask = self.algorithm.use_kl_prcp_token_level_mask
+        self.worker.actor.kl_prcp_token_level_mask_top_p = self.algorithm.kl_prcp_token_level_mask_top_p
 
         # auto keys for sft loss
         self.worker.actor.use_sft_loss = self.algorithm.use_sft_loss

@@ -95,14 +95,14 @@ class RLHFDataset(Dataset, ImageProcessMixin):
         max_pixels: Optional[int] = None,
         min_pixels: Optional[int] = None,
         filter_overlong_prompts: bool = True,
-        aug_image_key: str = "images_aug",  # for contrastive_kl
+        aug_image_key: str = "images_aug",  # for kl_prcp
     ):
         self.tokenizer = tokenizer
         self.processor = processor
         self.prompt_key = prompt_key
         self.answer_key = answer_key
         self.image_key = image_key
-        self.aug_image_key = aug_image_key  # for contrastive_kl
+        self.aug_image_key = aug_image_key  # for kl_prcp
         self.max_prompt_length = max_prompt_length
         self.truncation = truncation
         self.max_pixels = max_pixels

@@ -1,8 +1,8 @@
 #!/bin/bash
 set -x
 
-CUDA_IDS=0,1
-N_GPU=2
+CUDA_IDS=0,1,2,3
+N_GPU=4
 
 MODEL_PATH=Qwen/Qwen2.5-VL-7B-Instruct
 
@@ -14,7 +14,7 @@ MAX_PROMPT_LENGTH=4096
 
 EXP_NAME="qwen2_5_vl_7b__grpo__ep${TOTAL_EPOCHES}_rb${ROLLOUT_BATCH_SIZE}_gb${GLOBAL_BATCH_SIZE}"
 
-CONGI_FILE="examples/configs/config_papo.yaml"
+CONGI_FILE="examples/configs/config_grpo.yaml"
 TRAIN_FILE="PAPO/papo_virl39k_train"
 VAL_FILE="PAPO/papo_mm_eureka_test"
 

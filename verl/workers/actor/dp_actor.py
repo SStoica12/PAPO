@@ -219,10 +219,10 @@ class DataParallelPPOActor(BasePPOActor):
             non_tensor_select_keys = []
         
         # for contrastive kl
-        if "aug_log_probs" in data.batch.keys() and self.config.use_contrastive_kl:
+        if "aug_log_probs" in data.batch.keys() and self.config.use_kl_prcp:
             select_keys.append("aug_log_probs")
-            non_tensor_select_keys.append("contrastive_kl_weighting")
-            non_tensor_select_keys.append("contrastive_kl_coef")
+            non_tensor_select_keys.append("kl_prcp_weighting")
+            non_tensor_select_keys.append("kl_prcp_coef")
         
         if self.config.use_sft_loss:
             non_tensor_select_keys.append("correctness_mult_mask")
@@ -246,8 +246,8 @@ class DataParallelPPOActor(BasePPOActor):
 
                 for micro_batch in micro_batches:
                     # for contrastive kl
-                    contrastive_kl_weighting = micro_batch.non_tensor_batch.pop("contrastive_kl_weighting", None)
-                    contrastive_kl_coef = micro_batch.non_tensor_batch.pop("contrastive_kl_coef", None)
+                    kl_prcp_weighting = micro_batch.non_tensor_batch.pop("kl_prcp_weighting", None)
+                    kl_prcp_coef = micro_batch.non_tensor_batch.pop("kl_prcp_coef", None)
 
                     # for sft loss
                     correctness_mult_mask = micro_batch.non_tensor_batch.pop("correctness_mult_mask", None)
@@ -296,16 +296,16 @@ class DataParallelPPOActor(BasePPOActor):
                         aug_kld = core_algos.compute_kl(
                             log_probs=log_probs,
                             ref_log_probs=aug_log_probs,
-                            kl_penalty=self.config.contrastive_kl_penalty,
+                            kl_penalty=self.config.kl_prcp_penalty,
                         )
                         
                         # turn contastive_kl_weighting to tensor
-                        contrastive_kl_weighting = torch.tensor(contrastive_kl_weighting, device=aug_kld.device, dtype=aug_kld.dtype)
-                        contrastive_kl_weighting = contrastive_kl_weighting.unsqueeze(1) # (bsz, 1)
-                        aug_kld = aug_kld * contrastive_kl_weighting
+                        kl_prcp_weighting = torch.tensor(kl_prcp_weighting, device=aug_kld.device, dtype=aug_kld.dtype)
+                        kl_prcp_weighting = kl_prcp_weighting.unsqueeze(1) # (bsz, 1)
+                        aug_kld = aug_kld * kl_prcp_weighting
 
-                        if self.config.use_contrastive_kl_token_level_mask:
-                            top_p = self.config.contrastive_kl_token_level_mask_top_p
+                        if self.config.use_kl_prcp_token_level_mask:
+                            top_p = self.config.kl_prcp_token_level_mask_top_p
                             assert top_p > 0.0 and top_p < 1.0, "top_p must be in (0, 1) for token-level masking"
                             # --- Only keep *valid* tokens when computing the per-sample threshold -------------
                             valid_mask = response_mask.bool()                     # (bsz, resp_len)
@@ -315,30 +315,30 @@ class DataParallelPPOActor(BasePPOActor):
                             # Apply the mask (cast to same dtype)
                             aug_kld = aug_kld * token_mask.to(aug_kld.dtype)
 
-                        # try contrastive_kl clipping
-                        if self.config.use_contrastive_kl_clipping:
-                            aug_kld = torch.clamp(aug_kld, min=0.0, max=self.config.contrastive_kl_clipping)
+                        # try kl_prcp clipping
+                        if self.config.use_kl_prcp_clipping:
+                            aug_kld = torch.clamp(aug_kld, min=0.0, max=self.config.kl_prcp_clipping)
 
-                        contrastive_kl_loss = VF.masked_mean(aug_kld, response_mask)
+                        kl_prcp_loss = VF.masked_mean(aug_kld, response_mask)
 
-                        if contrastive_kl_coef is None:
-                            contrastive_kl_coef = self.config.contrastive_kl_coef
+                        if kl_prcp_coef is None:
+                            kl_prcp_coef = self.config.kl_prcp_coef
                         else:
-                            contrastive_kl_coef = contrastive_kl_coef[0] # an array of identical values, take the first one
+                            kl_prcp_coef = kl_prcp_coef[0] # an array of identical values, take the first one
                         
                         # if annealing; applying the same discount to aug_entropy_loss
-                        if contrastive_kl_coef != self.config.contrastive_kl_coef:
-                            discount_ratio = contrastive_kl_coef / self.config.contrastive_kl_coef
+                        if kl_prcp_coef != self.config.kl_prcp_coef:
+                            discount_ratio = kl_prcp_coef / self.config.kl_prcp_coef
 
-                        pg_loss = pg_loss - contrastive_kl_loss * contrastive_kl_coef
+                        pg_loss = pg_loss - kl_prcp_loss * kl_prcp_coef
 
                         # try adding additional entropy loss on aug probs
                         if self.config.use_aug_entropy_loss:
                             pg_loss = pg_loss + self.config.aug_entropy_loss_coef * discount_ratio * aug_entropy_loss
 
-                        metrics["actor/contrastive_kl_loss"] = - contrastive_kl_loss.detach().item()
-                        metrics["actor/contrastive_kl_coef"] = contrastive_kl_coef
-                        metrics["actor/contrastive_kl_coef_annealing_discount"] = discount_ratio
+                        metrics["actor/kl_prcp_loss"] = - kl_prcp_loss.detach().item()
+                        metrics["actor/kl_prcp_coef"] = kl_prcp_coef
+                        metrics["actor/kl_prcp_coef_annealing_discount"] = discount_ratio
                         metrics["actor/aug_entropy_loss"] = aug_entropy_loss.detach().item()
                         metrics["actor/aug_entropy_loss_coef"] = self.config.aug_entropy_loss_coef
 

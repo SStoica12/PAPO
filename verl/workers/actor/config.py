@@ -97,23 +97,25 @@ class ActorConfig:
     kl_penalty: str = field(default="kl", init=False)
     kl_coef: float = field(default=0.0, init=False)
 
-    # for contrastive_kl
-    use_contrastive_kl: bool = False
-    contrastive_kl_penalty: str = "kl"
-    contrastive_kl_coef: float = 1e-3
-    contrastive_kl_apply_mode: str = "all"  # correct_only, all, weighted
+    # for kl_prcp
+    use_kl_prcp: bool = False
+    kl_prcp_penalty: str = "kl"
+    kl_prcp_coef: float = 1e-3
+    kl_prcp_apply_mode: str = "all"  # correct_only, all, weighted
     
+    # double entropy loss
     use_aug_entropy_loss: bool = False
     aug_entropy_loss_coef: float = 1e-2
     
     use_ori_entropy_loss: bool = False
     ori_entropy_loss_coef: float = 1e-2
     
-    use_contrastive_kl_clipping: bool = False
-    contrastive_kl_clipping: float = 0.2
+    # other experimental settings
+    use_kl_prcp_clipping: bool = False
+    kl_prcp_clipping: float = 0.2
 
-    use_contrastive_kl_token_level_mask: bool = False
-    contrastive_kl_token_level_mask_top_p: float = 0.2 # top p tokens to apply contrastive kl loss
+    use_kl_prcp_token_level_mask: bool = False
+    kl_prcp_token_level_mask_top_p: float = 0.2 # top p tokens to apply contrastive kl loss
 
     # for sft loss
     use_sft_loss: bool = False

@@ -21,7 +21,7 @@ VAL_FILE="PAPO/papo_mm_eureka_test"
 FORMAT_PROMPT="examples/format_prompt/math_format_perception.jinja"
 REWARD_FUNCTION="examples/reward_function/math.py:compute_score"
 
-CONTRASTIVE_KL_COEF=0.02
+KL_PRCP_COEF=0.02
 
 export RAY_memory_usage_threshold=0.98
 CUDA_VISIBLE_DEVICES=${CUDA_IDS} python3 -m verl.trainer.main \
@@ -38,4 +38,4 @@ CUDA_VISIBLE_DEVICES=${CUDA_IDS} python3 -m verl.trainer.main \
     trainer.total_epochs=${TOTAL_EPOCHES} \
     worker.reward.reward_function=${REWARD_FUNCTION} \
     data.max_prompt_length=${MAX_PROMPT_LENGTH} \
-    algorithm.contrastive_kl_coef=${CONTRASTIVE_KL_COEF}
+    algorithm.kl_prcp_coef=${KL_PRCP_COEF}

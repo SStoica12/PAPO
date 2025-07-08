@@ -48,7 +48,7 @@ from .metrics import compute_data_metrics, compute_throughout_metrics, compute_t
 
 from PIL import Image
 from ..utils.dataset import collate_fn
-from .contrastive_kl_utils import random_patch_blackening
+from .kl_prcp_utils import random_patch_blackening
 
 class Role(IntEnum):
     """
@@ -135,12 +135,12 @@ def apply_kl_contrastive(
     data: DataProto,
     kl_ctrl_contrastive: core_algos.KLController,
     kl_penalty_contrastive="kl",
-    contrastive_kl_apply_mode="all",
+    kl_prcp_apply_mode="all",
 ):
     batch_size = data.batch.batch_size[0]
     response_mask = data.batch["response_mask"]
     
-    if contrastive_kl_apply_mode == "correct_only":
+    if kl_prcp_apply_mode == "correct_only":
         raise NotImplementedError("correct_only mode is not implemented yet.")
 
     kld_contrastive = core_algos.compute_kl(
@@ -278,13 +278,13 @@ class RayPPOTrainer:
             self.training_steps = len(train_dataloader) * config.trainer.total_epochs
 
         # define KL schedular
-        if config.algorithm.use_contrastive_kl:
-            if config.algorithm.contrastive_kl_schedule == "fixed":
-                self.kl_ctrl_contrastive = core_algos.FixedKLController(init_kl_coef=config.algorithm.contrastive_kl_coef)
-            elif config.algorithm.contrastive_kl_schedule == "annealing":
-                start_value = config.algorithm.contrastive_kl_schedule_args.get("start_value", config.algorithm.contrastive_kl_coef)
-                end_value = config.algorithm.contrastive_kl_schedule_args.get("end_value", 0.0)
-                annealing_ratio = config.algorithm.contrastive_kl_schedule_args.get("annealing_ratio", 0.5)
+        if config.algorithm.use_kl_prcp:
+            if config.algorithm.kl_prcp_schedule == "fixed":
+                self.kl_ctrl_contrastive = core_algos.FixedKLController(init_kl_coef=config.algorithm.kl_prcp_coef)
+            elif config.algorithm.kl_prcp_schedule == "annealing":
+                start_value = config.algorithm.kl_prcp_schedule_args.get("start_value", config.algorithm.kl_prcp_coef)
+                end_value = config.algorithm.kl_prcp_schedule_args.get("end_value", 0.0)
+                annealing_ratio = config.algorithm.kl_prcp_schedule_args.get("annealing_ratio", 0.5)
                 annealing_steps = int(self.training_steps * annealing_ratio)
                 print(f"Using annealing KL schedule with start value {start_value}, end value {end_value}, and total steps {annealing_steps}.")
                 self.kl_ctrl_contrastive = core_algos.AnnealingKLController(
@@ -525,7 +525,7 @@ class RayPPOTrainer:
         )
         metrics.update(global_balance_stats)
 
-    def _aug_img_for_contrastive_kl(self, original_images_pil: List[Image.Image]) -> List[Image.Image]:
+    def _aug_img_for_kl_prcp(self, original_images_pil: List[Image.Image]) -> List[Image.Image]:
         """
         Perform augmentation on the original images for contrastive KL.
         This function should be implemented based on the specific augmentation method used.
@@ -540,27 +540,27 @@ class RayPPOTrainer:
         else:
             raise NotImplementedError(f"Unknown contrastive KL type: {self.config.algorithm.contrastive_type}.")
 
-    def _get_contrastive_kl_weights(self, batch: DataProto, reward_metrics: Dict[str, Any]) -> DataProto:
-        if self.config.algorithm.contrastive_kl_apply_mode == "all":
-            batch.non_tensor_batch["contrastive_kl_weighting"] = np.array([1.0] * len(batch.batch))
-        elif self.config.algorithm.contrastive_kl_apply_mode == "correct_only":
+    def _get_kl_prcp_weights(self, batch: DataProto, reward_metrics: Dict[str, Any]) -> DataProto:
+        if self.config.algorithm.kl_prcp_apply_mode == "all":
+            batch.non_tensor_batch["kl_prcp_weighting"] = np.array([1.0] * len(batch.batch))
+        elif self.config.algorithm.kl_prcp_apply_mode == "correct_only":
             weights = []
             for i in range(len(batch.batch)):
                 if reward_metrics['accuracy'][i] > 0.1:
                     weights.append(1.0)
                 else:
                     weights.append(0.0)
-            batch.non_tensor_batch["contrastive_kl_weighting"] = np.array(weights)
-        elif self.config.algorithm.contrastive_kl_apply_mode == "acc_weighted":
+            batch.non_tensor_batch["kl_prcp_weighting"] = np.array(weights)
+        elif self.config.algorithm.kl_prcp_apply_mode == "acc_weighted":
             weights = []
             for i in range(len(batch.batch)):
                 if reward_metrics['accuracy'][i] > 0.1:
                     weights.append(1.0)
                 else:
                     weights.append(self.config.algorithm.incorrect_weighting)
-            batch.non_tensor_batch["contrastive_kl_weighting"] = np.array(weights)
+            batch.non_tensor_batch["kl_prcp_weighting"] = np.array(weights)
         else:
-            raise NotImplementedError(f"Unknown contrastive KL apply mode: {self.config.algorithm.contrastive_kl_apply_mode}.")
+            raise NotImplementedError(f"Unknown contrastive KL apply mode: {self.config.algorithm.kl_prcp_apply_mode}.")
         return batch
     
     def _get_correctness_mult_mask(self, batch: DataProto, reward_metrics: Dict[str, Any]) -> DataProto:
@@ -573,8 +573,8 @@ class RayPPOTrainer:
         batch.non_tensor_batch["correctness_mult_mask"] = np.array(weights) # len(batch.batch); 0.0 or 1.0
         return batch
 
-    def _get_contrastive_kl_coef(self, batch: DataProto) -> DataProto:
-        batch.non_tensor_batch["contrastive_kl_coef"] = np.array([self.kl_ctrl_contrastive.kl_coef] * len(batch.batch))
+    def _get_kl_prcp_coef(self, batch: DataProto) -> DataProto:
+        batch.non_tensor_batch["kl_prcp_coef"] = np.array([self.kl_ctrl_contrastive.kl_coef] * len(batch.batch))
         # update
         self.kl_ctrl_contrastive.update(current_kl=None, n_steps=1)
         return batch
@@ -608,7 +608,7 @@ class RayPPOTrainer:
 
                 metrics, timing_raw = {}, {}
                 batch: DataProto = DataProto.from_single_dict(batch_dict)
-                if self.config.algorithm.use_contrastive_kl and "multi_modal_data" in batch.non_tensor_batch.keys():
+                if self.config.algorithm.use_kl_prcp and "multi_modal_data" in batch.non_tensor_batch.keys():
                     # take the raw PIL images
                     aug_multi_modal_data = []
                     aug_multi_modal_inputs = []
@@ -618,7 +618,7 @@ class RayPPOTrainer:
                             aug_images_pil = item.pop('image_aug')  # a list
                         else: # online random augmentation 
                             original_images_pil = item['image'] # a list
-                            aug_images_pil = self._aug_img_for_contrastive_kl(original_images_pil)
+                            aug_images_pil = self._aug_img_for_kl_prcp(original_images_pil)
                         aug_multimodal_input = self.processor(aug_images_pil, ["dummy prompt"], add_special_tokens=False, return_tensors="pt")
                         aug_multimodal_input.pop("input_ids")
                         aug_multimodal_input.pop("attention_mask")
@@ -683,11 +683,11 @@ class RayPPOTrainer:
                         reward_ref = self.reward_fn.compute_reward.remote(batch)
                         reward_tensor, reward_metrics = ray.get(reward_ref)
 
-                    if self.config.algorithm.use_contrastive_kl:
+                    if self.config.algorithm.use_kl_prcp:
                         # store acc reward in batch
-                        batch = self._get_contrastive_kl_weights(batch, reward_metrics)
+                        batch = self._get_kl_prcp_weights(batch, reward_metrics)
                         # store contrastive kl coef in batch
-                        batch = self._get_contrastive_kl_coef(batch)
+                        batch = self._get_kl_prcp_coef(batch)
                     
                     if self.config.algorithm.use_sft_loss:
                         # compute correctness mask
@@ -698,7 +698,7 @@ class RayPPOTrainer:
                         old_log_probs = self.actor_rollout_wg.compute_log_probs(batch)
                         batch = batch.union(old_log_probs)
 
-                    if self.config.algorithm.use_contrastive_kl and "aug_multi_modal_inputs" in batch.non_tensor_batch.keys():
+                    if self.config.algorithm.use_kl_prcp and "aug_multi_modal_inputs" in batch.non_tensor_batch.keys():
                         # compute log_probs with augmented images
                         with timer("aug_probs", timing_raw):
                             aug_batch = deepcopy(batch)

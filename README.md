@@ -14,15 +14,15 @@
 
 </div>
 
-**PAPO** is a simple yet effective extension of GRPO that encourages multimodal models to learn to perceive while learning to reason. By introducing an Implicit Perception Loss, PAPO significantly improves multimodal reasoning capabilities without requiring additional data curation, external reward models, or proprietary models.
+**PAPO** is a simple yet effective extension of GRPO that encourages visually grounded reasoning. By introducing an Implicit Perception Loss that relies entirely on internal supervision signals, PAPO demonstrates consistent improvements in multimodal reasoning.
 
 ## 🌟 **Key Highlights**
 
 - **4.4% overall improvement** on diverse multimodal benchmarks
-- **8.0% improvement** on vision-dependent tasks  
+- **8.0% improvement** on tasks high vision-dependentcy  
 - **30.5% reduction** in perception errors
-- **No additional data or external models** required
-- Compatible with existing RLVR frameworks
+- **No additional data or external reward models** required
+- Serves as a **direct drop-in replacement** for GRPO
 
 ## 📖 **Methodology**
 
@@ -67,12 +67,12 @@ PAPO is highly compatible with removing the reference KL penalty, achieving furt
 ## 📊 **Data**
 
 ### **Training Data**
-We adapt [TIGER-Lab/ViRL39K](https://huggingface.co/datasets/TIGER-Lab/ViRL39K) and [FanqingM/MMK12](https://huggingface.co/datasets/FanqingM/MMK12) to train **PAPO**:
-- `PAPO/papo_virl39k_train`: [Hugging Face Dataset](https://huggingface.co/datasets/PAPO/papo_virl39k_train)
-- `PAPO/papo_mm_eureka_test`: [Hugging Face Dataset](https://huggingface.co/datasets/PAPO/papo_mm_eureka_test)
+
+- **Training**: We adapt [TIGER-Lab/ViRL39K](https://huggingface.co/datasets/TIGER-Lab/ViRL39K) for training. The processed dataset can be found at: [PAPO/papo_virl39k_train](https://huggingface.co/datasets/PAPO/papo_virl39k_train).
+- Validation (optional): We use the testset from [MMK12](https://huggingface.co/datasets/FanqingM/MMK12) for validation during training. **Note that this is solely for monitoring, we do not pick checkpoints based on this.** The processed dataset can be found [PAPO/papo_mm_eureka_test](https://huggingface.co/datasets/PAPO/papo_mm_eureka_test).
 
 ### **Evaluation Data**
-We adapted 8 different multimodal reasoning datasets to evaluate **PAPO**, which are further splitted into `General Reasoning` and `Vision-Dependent Reasoning` evaluation datasets:
+We adapted 8 different multimodal reasoning benchmarks to evaluate **PAPO**, which are further identify two groups, including `General Multimodal Reasoning` and `Vision-Dependent Multimodal Reasoning`:
 - **General Reasoning**
     - `hiyouga/geometry3k`: [Hugging Face Dataset](https://huggingface.co/datasets/hiyouga/geometry3k), [Data Source](https://github.com/lupantech/InterGPS)
     - `AI4Math/MathVista`: [Hugging Face Dataset](https://huggingface.co/datasets/AI4Math/MathVista)
@@ -85,11 +85,11 @@ We adapted 8 different multimodal reasoning datasets to evaluate **PAPO**, which
     - `MMMU/MMMU_Pro`: [Hugging Face Dataset](https://huggingface.co/datasets/MMMU/MMMU_Pro)
     - `MathVerse_V` (vision-dependent subset): Adapted from [AI4Math/MathVerse](https://huggingface.co/datasets/AI4Math/MathVerse)
 
+All results in the paper are average accurarcy @ 8 (repeating 8 times), with a temperature set to 1.0.
+
 ## 🚀 **Quick Start**
 
 ### **Environment Setup**
-
-We provide multiple ways to set up the environment:
 
 #### **Option 1: Using conda with environment.yaml**
 ```bash
@@ -104,7 +104,7 @@ pip install -e .
 
 ### **Training**
 
-We support training with different configurations for both `Qwen2.5-VL 3B` and `7B` models:
+The main training pipeline is adopted from [EasyR1](https://github.com/hiyouga/EasyR1). We support training with different configurations for both `Qwen2.5-VL 3B` and `7B` models:
 - **Qwen2.5-VL 3B:** We typically use 2 `80G H100` GPUs
 - **Qwen2.5-VL 7B:** We typically use 4 `80G H100` GPUs
 
@@ -136,18 +136,18 @@ bash examples/qwen2_5_vl_7b_papo.sh
 cd PAPO
 bash examples/qwen2_5_vl_3b_papo_high.sh
 
-# 7B model  
+# 7B model (with double entropy loss)
 cd PAPO
 bash examples/qwen2_5_vl_7b_papo_high.sh
 ```
 
 #### PAPO + No Reference KL
 ```bash
-# 3B model
+# 3B model (with double entropy loss)
 cd PAPO
 bash examples/qwen2_5_vl_3b_papo_no_kl_ref.sh
 
-# 7B model  
+# 7B model (with double entropy loss)
 cd PAPO
 bash examples/qwen2_5_vl_7b_papo_no_kl_ref.sh
 ```
@@ -155,7 +155,7 @@ bash examples/qwen2_5_vl_7b_papo_no_kl_ref.sh
 
 ## 🥰 Acknowledgements
 
-We thank the [EasyR1](https://github.com/deepseek-ai/DeepSeek-R1) team for providing the foundational codebase that we adapted to implement PAPO. Our implementation builds upon their efficient RLVR framework and extends it with perception-aware optimization methodologies. We also acknowledge the open-source community for providing the datasets and evaluation benchmarks that made this research possible.
+We thank the [EasyR1](https://github.com/hiyouga/EasyR1) team for providing the foundational codebase that we adapted to implement PAPO. Our implementation builds upon their efficient RLVR framework and extends it with perception-aware optimization methodologies. We also acknowledge the open-source community for providing the datasets and evaluation benchmarks that made this research possible.
 
 ## 📝 Citation
 

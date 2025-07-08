@@ -1,13 +1,13 @@
 data:
-  train_files: data/virl39k
-  val_files: data/virl39k
+  train_files: PAPO/papo_virl39k_train
+  val_files: PAPO/papo_mm_eureka_test
   prompt_key: problem
   answer_key: answer
   image_key: images
-  max_prompt_length: 2048
+  max_prompt_length: 4096
   max_response_length: 2048
-  rollout_batch_size: 512
-  val_batch_size: 1024
+  rollout_batch_size: 384
+  val_batch_size: 512
   format_prompt: examples/format_prompt/math_format_perception.jinja
   override_chat_template: null
   shuffle: true
@@ -23,32 +23,26 @@ algorithm:
   kl_penalty: low_var_kl
   kl_coef: 1.0e-2
 
-  use_contrastive_kl: true
+  use_kl_prcp: true
   contrastive_type: augmented
-  contrastive_kl_penalty: low_var_kl
-  contrastive_kl_coef: 1.0e-2
-  contrastive_kl_apply_mode: all
+  kl_prcp_penalty: low_var_kl
+  kl_prcp_coef: 1.0e-2
+  kl_prcp_apply_mode: all
   incorrect_weighting: 0.1
   aug_config:
     patch_size: 14
     black_prob: 0.6
-  contrastive_kl_schedule: fixed
-  contrastive_kl_schedule_args:
+  kl_prcp_schedule: fixed
+  kl_prcp_schedule_args:
     start_value: 1.0e-2
     end_value: 0.0
     annealing_ratio: 0.5
   
   use_aug_entropy_loss: false
-  aug_entropy_loss_coef: 1.0e-5
+  aug_entropy_loss_coef: 0.03
   
   use_ori_entropy_loss: false
-  ori_entropy_loss_coef: 1.0e-5
-  
-  use_contrastive_kl_clipping: false
-  contrastive_kl_clipping: 0.2
-
-  use_contrastive_kl_token_level_mask: false
-  contrastive_kl_token_level_mask_top_p: 0.2
+  ori_entropy_loss_coef: 0.03
 
 worker:
   actor:

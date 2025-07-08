@@ -37,7 +37,7 @@ def create_dataloader(config: DataConfig, tokenizer: PreTrainedTokenizer, proces
         min_pixels=config.min_pixels,
         max_pixels=config.max_pixels,
         filter_overlong_prompts=config.filter_overlong_prompts,
-        aug_image_key=config.aug_image_key,  # for contrastive_kl
+        aug_image_key=config.aug_image_key,  # for kl_prcp
     )
     # use sampler for better ckpt resume
     if config.shuffle:
