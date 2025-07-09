@@ -156,6 +156,9 @@ cd PAPO
 bash examples/qwen2_5_vl_7b_papo_no_kl_ref.sh
 ```
 
+### **Pretrained Checkpoints**
+
+A collection of 7B/3B pretrained checkpoints on ViRL39K can be downloaded from [here](https://huggingface.co/collections/PAPOGalaxy/papo-qwen-686d92dd3d43b1ce698f851a). The checkpoints follows Qwen2.5-VL Huggingface format, which can be inferenced as drop-in replacement to https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct. 
 
 ## 🥰 Acknowledgements
 
@@ -163,16 +166,14 @@ We thank the [EasyR1](https://github.com/hiyouga/EasyR1) team for providing the 
 
 ## 📝 Citation
 
-If you find PAPO useful in your research, please kindly cite our paper:
-
 ```bibtex
-@article{wang2025papo,
+```
+<!-- @article{wang2025papo,
   title={PAPO: Perception-Aware Policy Optimization for Multimodal Reasoning},
   author={Wang, Zhenhailong and Guo, Xuehang and Stoica, Sofia and Xu, Haiyang and Wang, Hongru and Ha, Hyeonjeong and Chen, Xiusi and Chen, Yangyi and Yan, Ming and Huang, Fei and Ji, Heng},
   journal={arXiv preprint arXiv:XXXX.XXXXX},
   year={2025}
-}
-```
+} -->
 
 ## 📄 License
 

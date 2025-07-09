@@ -582,6 +582,7 @@
           <button class="tab-button active" onclick="showTab('main-results')"><b>Main Results</b></button>
           <button class="tab-button" onclick="showTab('ablation')"><b>Ablation Studies</b></button>
           <button class="tab-button" onclick="showTab('no-kl')"><b>Remove Reference KL</b></button>
+          <button class="tab-button" onclick="showTab('qualitative-examples')"><b>Qualitative Examples</b></button>
         </div>
         
         <div id="main-results" class="tab-content active">
@@ -829,6 +830,29 @@
           
           <p style="font-size: 1.1rem; line-height: 1.8; margin-top: 20px;">
             Combining PAPO with removing the reference KL penalty leads to further improvements, particularly pronounced on 3B models with an average relative gain of over <strong>11%</strong>. The Double Entropy Loss becomes crucial in this setting to prevent KLprcp Hacking.
+          </p>
+        </div>
+
+        <div id="qualitative-examples" class="tab-content">
+          <h3 class="section-subtitle">Qualitative Examples</h3>
+          
+          <div class="figure-container">
+            <img src="./static/images/example_failure_1.png" alt="qualitative example 1" style="width: 100%; max-width: 800px;"/>
+            <!-- <div class="figure-caption"><strong>Figure:</strong> Qualitative example 1 showing improved perception with PAPO.</div> -->
+          </div>
+          
+          <div class="figure-container">
+            <img src="./static/images/example_failure_2.png" alt="qualitative example 2" style="width: 100%; max-width: 800px;"/>
+            <!-- <div class="figure-caption"><strong>Figure:</strong> Qualitative example 2 demonstrating enhanced multimodal reasoning capabilities.</div> -->
+          </div>
+          
+          <div class="figure-container">
+            <img src="./static/images/example_failure_3.png" alt="qualitative example 3" style="width: 100%; max-width: 800px;"/>
+            <!-- <div class="figure-caption"><strong>Figure:</strong> Qualitative example 3 illustrating the benefits of perception-aware optimization.</div> -->
+          </div>
+          
+          <p style="font-size: 1.1rem; line-height: 1.8; margin-top: 30px;">
+            Additional qualitative examples demonstrate how PAPO improves multimodal reasoning with better perception.
           </p>
         </div>
       </div>
