@@ -66,6 +66,10 @@ PAPO is highly compatible with removing the reference KL penalty, achieving furt
 
 ## 📊 **Data**
 
+We adapt multiple multimodel reasoning benchmarks to construct our training and evaluation datasets.
+
+Please refer to our *Hugging Face datasets* for more details: [PAPOGalaxy/PAPO_Data](https://huggingface.co/datasets/PAPOGalaxy/PAPO_Data).
+
 ### **Training Data**
 
 - **Training**: We adapt [TIGER-Lab/ViRL39K](https://huggingface.co/datasets/TIGER-Lab/ViRL39K) for training. The processed dataset can be found at: [PAPO/papo_virl39k_train](https://huggingface.co/datasets/PAPO/papo_virl39k_train).
