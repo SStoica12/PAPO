@@ -15,8 +15,8 @@ MAX_PROMPT_LENGTH=4096
 EXP_NAME="qwen2_5_vl_7b__papo_no_kl_ref__ep${TOTAL_EPOCHES}_rb${ROLLOUT_BATCH_SIZE}_gb${GLOBAL_BATCH_SIZE}"
 
 CONGI_FILE="examples/configs/config_papo.yaml"
-TRAIN_FILE="PAPO/papo_virl39k_train"
-VAL_FILE="PAPO/papo_mm_eureka_test"
+TRAIN_FILE="PAPOGalaxy/PAPO_train"
+VAL_FILE="PAPOGalaxy/PAPO_val"
 
 FORMAT_PROMPT="examples/format_prompt/math_format_perception.jinja"
 REWARD_FUNCTION="examples/reward_function/math.py:compute_score"
