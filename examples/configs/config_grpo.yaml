@@ -1,6 +1,6 @@
 data:
-  train_files: PAPO/papo_virl39k_train
-  val_files: PAPO/papo_mm_eureka_test
+  train_files: PAPOGalaxy/PAPO_ViRL39K_train
+  val_files: PAPOGalaxy/PAPO_MMK12_test
   prompt_key: problem
   answer_key: answer
   image_key: images
