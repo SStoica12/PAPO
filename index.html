@@ -882,7 +882,7 @@
       This idea stems from our observation that rising rollout entropy in both π_θ and π_θ^mask is an early sign of collapse. Double Entropy Loss encourages the model to keep both entropies low, and can be expressed as:
 
       <div class="figure-container">
-        <img src="./static/images/double_ent_loss.png" alt="collapsing behavior example" style="width: 100%; max-width: 400px;"/>
+        <img src="./static/images/double_ent_loss.png" alt="double entropy loss" style="width: 100%; max-width: 400px;"/>
         <!-- <div class="figure-caption"><strong>Example:</strong> Demonstration of how collapsed models generate unrelated tokens during reasoning.</div> -->
       </div>
       where H denotes the entropy loss, computed as the negative log probability of the generated sequence, and the ... part is identical to PAPO objective as shown above.
