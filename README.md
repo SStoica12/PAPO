@@ -165,14 +165,11 @@ We thank the [EasyR1](https://github.com/hiyouga/EasyR1) team for providing the 
 ## 📝 Citation
 
 ```bibtex
-@misc{wang2025perceptionawarepolicyoptimizationmultimodal,
-      title={Perception-Aware Policy Optimization for Multimodal Reasoning}, 
-      author={Zhenhailong Wang and Xuehang Guo and Sofia Stoica and Haiyang Xu and Hongru Wang and Hyeonjeong Ha and Xiusi Chen and Yangyi Chen and Ming Yan and Fei Huang and Heng Ji},
-      year={2025},
-      eprint={2507.06448},
-      archivePrefix={arXiv},
-      primaryClass={cs.CL},
-      url={https://arxiv.org/abs/2507.06448}, 
+@article{wang2025perception,
+  title={Perception-Aware Policy Optimization for Multimodal Reasoning},
+  author={Wang, Zhenhailong and Guo, Xuehang and Stoica, Sofia and Xu, Haiyang and Wang, Hongru and Ha, Hyeonjeong and Chen, Xiusi and Chen, Yangyi and Yan, Ming and Huang, Fei and others},
+  journal={arXiv preprint arXiv:2507.06448},
+  year={2025}
 }
 ```
 
