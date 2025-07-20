@@ -93,7 +93,7 @@ All results in the paper are average accurarcy @ 8 (repeating 8 times), with a t
 
 ### **Environment Setup**
 
-#### **Option 1: Using conda with directly install**
+#### **Option 1: All-in-one Installation Script**
 ```bash
 conda create -n papo python=3.10
 conda activate papo
