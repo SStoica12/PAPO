@@ -93,10 +93,13 @@ All results in the paper are average accurarcy @ 8 (repeating 8 times), with a t
 
 ### **Environment Setup**
 
-#### **Option 1: Using conda with environment.yaml**
+#### **Option 1: Using conda with directly install**
 ```bash
-conda env create -f environment.yaml
+conda create -n papo python=3.10
 conda activate papo
+
+cd PAPO
+bash scripts/install.sh
 ```
 
 #### **Option 2: Using pip**
