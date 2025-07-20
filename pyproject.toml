@@ -21,33 +21,45 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 keywords = ["ai", "ml", "deep-learning", "transformers", "llm"]
 
 dependencies = [
+    # Core build dependencies
+    "setuptools>=61.0",
+    "wheel",
+    "ninja",
+    "packaging",
+    
+    # Core ML/AI packages
     "vllm==0.8.4",
     "accelerate",
-    "codetiming",
     "datasets",
-    "liger-kernel",
-    "mathruler",
     "numpy",
-    "omegaconf",
     "pandas",
     "peft",
     "pillow",
     "pyarrow>=15.0.0",
+    "transformers==4.51.3",
+    
+    # Configuration and utilities
+    "omegaconf",
+    "codetiming",
+    "wandb",
+    "tensorboard",
+    
+    # Math and data processing
+    "mathruler",
     "pylatexenc",
     "qwen-vl-utils",
     "tensordict",
     "torchdata",
-    "wandb",
-    "flash-attn",
-    "tensorboard",
-    "transformers==4.51.3",
-    "torch",
+    
+    # PyTorch
+    "torch==2.6.0",
     "torchvision",
     "torchaudio",
 ]
@@ -67,7 +79,16 @@ docs = [
     "sphinx-rtd-theme>=1.0",
     "myst-parser>=0.18",
 ]
-flashinfer = [
+# Attention optimization dependencies
+cuda-optimized = [
+    "flash-attn==2.7.4.post1",
+    "liger-kernel",
+    "flashinfer-python",
+]
+# All dependencies combined
+all = [
+    "flash-attn==2.7.4.post1",
+    "liger-kernel", 
     "flashinfer-python",
 ]
 
