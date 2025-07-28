@@ -161,6 +161,24 @@ bash examples/qwen2_5_vl_7b_papo_no_kl_ref.sh
 
 A collection of 7B/3B pretrained checkpoints on ViRL39K can be downloaded from [here](https://huggingface.co/collections/PAPOGalaxy/papo-qwen-686d92dd3d43b1ce698f851a). The checkpoints follows Qwen2.5-VL Huggingface format, which can be inferenced as drop-in replacement to https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct. 
 
+### **Performance Evaluation**
+
+To run model inference and evaluation, we integrate the evaluation submodule located at `PAPO/PAPO-Eval`.
+Detailed instructions for running inference and evaluation can be found in [PAPO-Eval](https://github.com/xhguo7/PAPO-Eval).
+```bash
+# Navigate to PAPO evaluation submodule
+cd PAPO-Eval
+
+# Data preprocessing
+bash papo_eval/preprocess/preprocess.sh
+
+# Run model inference
+bash papo_eval/run_infer.sh
+
+# Run model evaluation
+bash papo_eval/run_eval.sh
+```
+
 ## 🥰 Acknowledgements
 
 We thank the [EasyR1](https://github.com/hiyouga/EasyR1) team for providing the foundational codebase that we adapted to implement PAPO. Our implementation builds upon their efficient RLVR framework and extends it with perception-aware optimization methodologies. We also acknowledge the open-source community for providing the datasets and evaluation benchmarks that made this research possible.
