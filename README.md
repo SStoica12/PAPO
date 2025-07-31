@@ -14,15 +14,21 @@
 
 </div>
 
-**PAPO** is a simple yet effective extension of GRPO that encourages visually grounded reasoning. By introducing an Implicit Perception Loss that relies entirely on internal supervision signals, PAPO demonstrates consistent improvements in multimodal reasoning.
+**PAPO**, a novel policy gradient algorithm that enhances multimodal reasoning through visually grounded optimization. PAPO can serve as a direct drop-in replacement for GRPO or DAPO without any additional assumptions.
+
+## 🔥 News 
+- [x] Released PAPO_G (GRPO) models
+- [x] Released PAPO_G (GRPO) code
+- [ ] TODO: Release PAPO_D (DAPO) models
+- [ ] TODO: Release PAPO_D (DAPO) code
 
 ## 🌟 **Key Highlights**
 
-- **4.4% overall improvement** on diverse multimodal benchmarks
-- **8.0% improvement** on tasks high vision-dependentcy  
+- **4.4%-17.5% overall improvement** on diverse multimodal benchmarks
+- **8.0%-19.1% improvement** on tasks high vision-dependentcy  
 - **30.5% reduction** in perception errors
 - **No additional data or external reward models** required
-- Serves as a **direct drop-in replacement** for GRPO
+- Serves as a **direct drop-in replacement** for GRPO and DAPO
 
 ## 📖 **Methodology**
 
@@ -36,13 +42,13 @@ We identified that **67% of errors** in current multimodal reasoning models stem
 
 ### **PAPO Algorithm**
 
-**PAPO** extends GRPO by adding an **Implicit Perception Loss** that maximizes the KL divergence between model outputs on original vs. corrupted (masked) images:
+**PAPO** extends GRPO/DAPO by adding an **Implicit Perception Loss** that maximizes the KL divergence between model outputs on original vs. corrupted (masked) images:
 
 <div align="center">
 <img src="./static/images/method.png" alt="PAPO Method" width="940"/>
 </div>
 
-The core intuition is that a well-behaved multimodal model should produce significantly different outputs when visual information is corrupted, indicating reliance on meaningful visual content.
+The core intuition is that a well-behaved multimodal model should produce significantly different outputs when visual information is corrupted, indicating reliance on meaningful visual content. To further enhance training stability, we introduce Double Entropy Loss, an effective regularizer that prevents model collapse while preserving performance.
 
 <div align="center">
 <img src="./static/images/method_objective.png" alt="PAPO Objective" width="940"/>
@@ -50,19 +56,12 @@ The core intuition is that a well-behaved multimodal model should produce signif
 
 ### **Main Results**
 
-PAPO consistently outperforms GRPO across all benchmarks, with particularly pronounced improvements on vision-dependent tasks:
+PAPO consistently outperforms GRPO/DAPO across diverse benchmarks, with particularly pronounced improvements on vision-dependent tasks:
 
 <div align="center">
 <img src="./static/images/main_results.png" alt="Main Results" width="1200"/>
 </div>
 
-#### **PAPO + Remove Reference KL**
-
-PAPO is highly compatible with removing the reference KL penalty, achieving further improvements:
-
-<div align="center">
-<img src="./static/images/remove_kl_table.png" alt="PAPO Remove KL Results" width="450"/>
-</div>
 
 ## 📊 **Data**
 

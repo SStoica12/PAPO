@@ -513,7 +513,7 @@
         Abstract
       </h2>
       <p style="font-size: 1.1rem; line-height: 1.8;">
-        Reinforcement Learning with Verifiable Rewards (RLVR) has proven to be a highly effective strategy for endowing Large Language Models (LLMs) with robust multi-step reasoning abilities. However, its design and optimizations remain tailored to purely textual domains, resulting in suboptimal performance when applied to multimodal reasoning tasks. In particular, we observe that a major source of error in current multimodal reasoning lies in the perception of visual inputs. To address this bottleneck, we propose <strong>Perception-Aware Policy Optimization (PAPO)</strong>, a simple yet effective extension of GRPO that encourages the model to learn to perceive while learning to reason. Notably, PAPO does not rely on additional data curation, external reward models, or proprietary models. Specifically, we introduce the Implicit Perception Loss in the form of a KL divergence term to the GRPO objective, which, despite its simplicity, yields significant overall improvements (4.4%) on diverse multimodal benchmarks. The improvements are more pronounced, approaching 8.0%, on tasks with high vision dependency. We also observe a substantial reduction (30.5%) in perception errors, indicating improved perceptual capabilities with PAPO.
+        Reinforcement Learning with Verifiable Rewards (RLVR) has proven to be a highly effective strategy for endowing Large Language Models (LLMs) with robust multi-step reasoning abilities. However, its design and optimizations remain tailored to purely textual domains, resulting in suboptimal performance when applied to multimodal reasoning tasks. In particular, we observe that a major source of error (67%) in current multimodal reasoning lies in the perception of visual inputs. To address this bottleneck, we propose <strong>Perception-Aware Policy Optimization (PAPO)</strong>, a novel policy gradient algorithm that encourages the model to learn to perceive while learning to reason. Specifically, we introduce the Implicit Perception Loss in the form of a KL divergence term, which can be seamlessly plugged into mainstream RLVR algorithms such as GRPO and DAPO. Notably, PAPO does not rely on additional data curation, reward models, or stronger teacher models. Despite its simplicity, PAPO yields significant overall improvements of 4.4%-17.5% on diverse multimodal benchmarks. The improvements are more pronounced, approaching 8.0%-19.1%, on tasks with high vision dependency. We also observe a substantial reduction of 30.5% in perception errors, indicating improved perceptual capabilities with PAPO.
       </p>
     </div>
   </section>
@@ -532,7 +532,11 @@
       </div>
       
       <p style="font-size: 1.1rem; line-height: 1.8; margin-top: 30px;">
-        We raise two fundamental research questions: <span style="font-family: 'Georgia', 'Times New Roman', serif; font-style: italic; font-size: 1.15rem; color: var(--secondary-color); font-weight: 500; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">"(1) Are there unique challenges in multimodal reasoning that do not arise in text-only settings? (2) If so, how can we design a better RLVR algorithm grounded in multimodal principles?"</span>
+        We raise two fundamental research questions:
+        <span style="font-family: 'Georgia', 'Times New Roman', serif; font-style: italic; font-size: 1.15rem; color: var(--secondary-color); font-weight: 500; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">"
+          (1) Are there unique challenges in multimodal reasoning that do not arise in text-only settings and cannot be addressed solely through data- or reward-level modifications?
+          (2) If so, how can we address this by designing a new <bf><i>RLVR optimization objective</i></bf> that is better grounded in multimodal domains?
+        </span>
         In exploring the essential causes of failures in multimodal reasoning, we follow a typical GRPO pipeline to train Qwen2.5-VL-3B on ViRL39K and manually examine and categorize error types based on 200 error instances sampled from four benchmarks. We find that the majority of errors, <strong>67.0%</strong>, stem from poor perception. We hypothesize that this bottleneck in perception is due to the GRPO objective not providing any incentive for the model to generate visually grounded responses.
       </p>
     </div>
@@ -552,7 +556,7 @@
       </div>
       
       <p style="font-size: 1.1rem; line-height: 1.8; margin: 30px 0;">
-        We propose <strong>Perception-Aware Policy Optimization (PAPO)</strong>, a novel RLVR algorithm that enhances multimodal reasoning through visually grounded optimization. PAPO is a simple extension of GRPO that directly incorporates a perception-aware internal supervision signal into its training objective. Notably, <strong>PAPO does not rely on additional data curation, external reward models, or proprietary models.</strong>
+        We propose <strong>Perception-Aware Policy Optimization (PAPO)</strong>, a novel policy gradient algorithm that enhances multimodal reasoning through visually grounded optimization. PAPO can serve as a direct drop-in replacement for GRPO or DAPO without any additional assumptions. The key idea of PAPO is to encourage the model to <i>learn to perceive while learning to reason</i> by introducing an Implicit Perception Loss in the form of a KL divergence term that can be seamlessly plugged into mainstream RLVR algorithms. Notably, <strong>PAPO does not rely on additional data curation, external reward models, or proprietary models.</strong>
       </p>
       
       <div class="figure-container">
@@ -560,12 +564,31 @@
         <div class="figure-caption"><strong>Figure 3:</strong> Comparison of GRPO and PAPO objectives.</div>
       </div>
       
-      <div style="background: #f8fafc; padding: 25px; border-radius: 15px; margin: 30px 0; border-left: 5px solid var(--secondary-color);">
+      <!-- <div style="background: #f8fafc; padding: 25px; border-radius: 15px; margin: 30px 0; border-left: 5px solid var(--secondary-color);">
         <h3 style="color: var(--secondary-color); margin-bottom: 15px;">Key Innovation: Implicit Perception Loss</h3>
         <p style="line-height: 1.7;">
           PAPO introduces an Implicit Perception Loss in the form of a KL divergence term that maximizes the difference between the model's output distribution when given the original image versus a corrupted (masked) version. This encourages the model to rely on meaningful visual content for generating responses, addressing the core perception bottleneck in multimodal reasoning.
         </p>
+      </div> -->
+
+
+      <h3 class="section-subtitle">Implicit Perception Loss</h3>
+      <p style="line-height: 1.8; margin-bottom: 20px;">
+        PAPO introduces an Implicit Perception Loss in the form of a KL divergence term that maximizes the difference between the model's output distribution when given the original image versus a corrupted (masked) version. This encourages the model to rely on meaningful visual content for generating responses, addressing the core perception bottleneck in multimodal reasoning.
+      </p>
+
+      <h3 class="section-subtitle">Double Entropy Loss</h3>
+      <p style="line-height: 1.8; margin-bottom: 20px;">
+        To further enhance the training stability of PAPO, we introduce Double Entropy Loss, an effective regularizer that prevents collapse while preserving performance. This idea stems from our observation that rising rollout entropy in both π_θ and π_θ^mask is an early sign of collapse. Double Entropy Loss encourages the model to keep both entropies low.
+      </p>
+
+      <!-- <div class="figure-container">
+        <img src="./static/images/double_ent_loss.png" alt="double entropy loss" style="width: 100%; max-width: 400px;"/>
       </div>
+      <p style="line-height: 1.8; margin-top: 20px;">
+        where H denotes the entropy loss, computed as the log probability of the generated sequence, and the ... part is identical to PAPO objective as shown above.
+      </p> -->
+
     </div>
   </section>
 
@@ -582,6 +605,7 @@
           <button class="tab-button active" onclick="showTab('main-results')"><b>Main Results</b></button>
           <button class="tab-button" onclick="showTab('ablation')"><b>Ablation Studies</b></button>
           <button class="tab-button" onclick="showTab('no-kl')"><b>Remove Reference KL</b></button>
+          <button class="tab-button" onclick="showTab('dapo-regularization')"><b>DAPO Regularization</b></button>
           <button class="tab-button" onclick="showTab('qualitative-examples')"><b>Qualitative Examples</b></button>
         </div>
         
@@ -589,26 +613,30 @@
           <h3 class="section-subtitle">Main Results</h3>
           <div class="figure-container">
             <img src="./static/images/main_results.png" alt="main results" style="width: 1000px; max-width: 100%;"/>
-            <div class="figure-caption"><strong>Table 1:</strong> Performance (avg@8 acc %) comparison of Qwen2.5-VL-3B and 7B models between GRPO and PAPO on general and more vision-dependent multimodal reasoning tasks. MathVerseV refers to the vision-centric subset of MathVerse. PAPO_H denotes the high KLprcp weighting (γ = 0.02) variant of PAPO (γ = 0.01). ∆%rel indicates the averaged relative gain over GRPO for each task. We observe consistent improvements with both PAPO and PAPO_H, with gains approaching 8%, especially on heavily vision-dependent tasks.</div>
+            <div class="figure-caption"><strong>Table 1:</strong> Performance (avg@8 acc %) comparison of Qwen2.5-VL-3B and 7B models between GRPO, DAPO and PAPO on general and more vision-dependent multimodal reasoning tasks. MathVerseV refers to the vision-centric subset of MathVerse. ∆%rel indicates the averaged relative gain over the baseline for each task. We observe consistent improvements against both GRPO and DAPO, with gains approaching 8%-19%, especially on tasks with high vision-dependency.</div>
           </div>
           
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 30px 0;">
-            <div style="background: var(--gradient-2); color: white; padding: 25px; border-radius: 15px; text-align: center;">
-              <div style="font-size: 2.5rem; font-weight: bold;">4.4%</div>
-              <div>Overall Improvement</div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 30px 0;">
+            <div style="background: var(--gradient-2); color: white; padding: 20px; border-radius: 15px; text-align: center;">
+              <div style="font-size: 2rem; font-weight: bold;">4.4%-17.5%</div>
+              <div style="font-size: 0.9rem;">Overall Improvement</div>
             </div>
-            <div style="background: var(--gradient-3); color: white; padding: 25px; border-radius: 15px; text-align: center;">
-              <div style="font-size: 2.5rem; font-weight: bold;">8.0%</div>
-              <div>Vision-Dependent Tasks</div>
+            <div style="background: var(--gradient-3); color: white; padding: 20px; border-radius: 15px; text-align: center;">
+              <div style="font-size: 2rem; font-weight: bold;">8.0%-19.1%</div>
+              <div style="font-size: 0.9rem;">Vision-Dependent Tasks</div>
             </div>
-            <div style="background: var(--gradient-1); color: white; padding: 25px; border-radius: 15px; text-align: center;">
-              <div style="font-size: 2.5rem; font-weight: bold;">30.5%</div>
-              <div>Perception Error Reduction</div>
+            <div style="background: var(--gradient-1); color: white; padding: 20px; border-radius: 15px; text-align: center;">
+              <div style="font-size: 2rem; font-weight: bold;">30.5%</div>
+              <div style="font-size: 0.9rem;">Perception Error Reduction</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 20px; border-radius: 15px; text-align: center;">
+              <div style="font-size: 2rem; font-weight: bold;">GRPO & DAPO</div>
+              <div style="font-size: 0.9rem;">Both Baselines Improved</div>
             </div>
           </div>
           
           <p style="font-size: 1.1rem; line-height: 1.8;">
-            PAPO consistently outperforms GRPO across all benchmarks, with particularly pronounced improvements on vision-dependent tasks. The results demonstrate that our simple yet effective approach successfully addresses the perception bottleneck in multimodal reasoning without requiring additional computational resources or external models.
+            PAPO consistently outperforms both GRPO and DAPO across all benchmarks, with particularly pronounced improvements on vision-dependent tasks. The results demonstrate that our simple yet effective approach successfully addresses the perception bottleneck in multimodal reasoning without requiring additional computational resources or external models. PAPO can serve as a direct drop-in replacement for both GRPO and DAPO.
           </p>
         </div>
         
@@ -683,6 +711,7 @@
               <li>A larger γ under 0.02 tends to result in more pronounced improvements, especially on more visually-dependent tasks.</li>
               <li>γ should not be set too large (e.g., 0.04), as it causes severe model collapse that cannot be regularized. (Detailed in later sections)</li>
               <li>Without additional regularization, setting γ=0.02 for 3B models and γ=0.01 for 7B models serves as a good default.</li>
+              <li>Larger models are more sensitive to higher γ values and require earlier regularization.</li>
             </ul>
           </div>
         
@@ -742,15 +771,72 @@
               </tr>
             </tbody>
           </table>
+
+          <h4 style="color: var(--secondary-color); margin: 25px 0 15px 0;">Impact of Masking Ratio</h4>
+          <table class="interactive-table">
+            <thead>
+              <tr>
+                <th>Model Size</th>
+                <th>Masking Ratio</th>
+                <th>General AVG</th>
+                <th>General Δ%rel</th>
+                <th>Vision AVG</th>
+                <th>Vision Δ%rel</th>
+                <th>Overall AVG</th>
+                <th>Overall Δ%rel</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background: #f1f5f9;">
+                <td rowspan="4"><strong>3B</strong></td>
+                <td>random @0.4</td>
+                <td>52.51</td>
+                <td>↑ 1.6</td>
+                <td>44.12</td>
+                <td>↑ 2.3</td>
+                <td>48.78</td>
+                <td>↑ 1.9</td>
+              </tr>
+              <tr style="background: #f1f5f9;">
+                <td>random @0.6</td>
+                <td>52.53</td>
+                <td class="highlight">↑ 1.7</td>
+                <td>45.17</td>
+                <td class="highlight">↑ 4.5</td>
+                <td>49.26</td>
+                <td class="highlight">↑ 3.0</td>
+              </tr>
+              <tr style="background: #f1f5f9;">
+                <td>random @0.8</td>
+                <td>52.57</td>
+                <td>↑ 1.5</td>
+                <td>44.24</td>
+                <td>↑ 2.7</td>
+                <td>48.87</td>
+                <td>↑ 2.0</td>
+              </tr>
+              <tr style="background: #f1f5f9;">
+                <td>random @1.0</td>
+                <td>52.13</td>
+                <td>↑ 0.7</td>
+                <td>43.98</td>
+                <td>↑ 2.3</td>
+                <td>48.51</td>
+                <td>↑ 1.4</td>
+              </tr>
+            </tbody>
+          </table>
           
           <div style="background: #ecfdf5; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #10b981;">
             <h4 style="color: #059669; margin-bottom: 10px;">Key Findings</h4>
             <ul style="line-height: 1.7; margin-left: 20px;">
               <li>Despite its simplicity, random masking empirically outperforms semantic-aware masking</li>
               <li>A sufficiently large masking ratio (0.6-0.8) yields the best performance</li>
+              <li>Complete blackening (ratio 1.0) is less effective and more prone to KLprcp hacking</li>
             </ul>
           </div>
         </div>
+
       </div>
         <div id="no-kl" class="tab-content">
           <h3 class="section-subtitle">PAPO + Remove Reference KL</h3>
@@ -832,6 +918,67 @@
           </p>
         </div>
 
+        <div id="dapo-regularization" class="tab-content">
+          <h3 class="section-subtitle">DAPO Baseline Regularization Analysis</h3>
+          
+          <div class="figure-container">
+            <img src="./static/images/experiments_dapo_regularization.png" alt="DAPO regularization comparison" style="width: 100%; max-width: 800px;"/>
+            <div class="figure-caption"><strong>Figure:</strong> Training dynamics comparison between DAPO baseline with entropy regularization and PAPOD with Double Entropy Loss. While adding entropy loss to DAPO delays collapse, PAPOD maintains stable training throughout and achieves superior performance.</div>
+          </div>
+          
+          <table class="interactive-table">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>General AVG</th>
+                <th>General Δ%rel</th>
+                <th>Vision AVG</th>
+                <th>Vision Δ%rel</th>
+                <th>Overall AVG</th>
+                <th>Overall Δ%rel</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>DAPO-7B</strong></td>
+                <td>57.58</td>
+                <td>−</td>
+                <td>51.79</td>
+                <td>−</td>
+                <td>55.01</td>
+                <td>−</td>
+              </tr>
+              <tr>
+                <td>DAPO-7B + Entropy Loss</td>
+                <td>64.77</td>
+                <td>↑ 13.5</td>
+                <td>59.14</td>
+                <td>↑ 17.7</td>
+                <td>62.27</td>
+                <td>↑ 15.9</td>
+              </tr>
+              <tr style="background: #ecfdf5;">
+                <td><strong>PAPOD-7B (w/ Double Ent)</strong></td>
+                <td>65.83</td>
+                <td class="highlight">↑ 15.6</td>
+                <td>59.82</td>
+                <td class="highlight">↑ 19.1</td>
+                <td>63.16</td>
+                <td class="highlight">↑ 17.5</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <div style="background: #ecfdf5; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #10b981;">
+            <h4 style="color: #059669; margin-bottom: 15px;">Key Findings</h4>
+            <ul style="line-height: 1.7; margin-left: 20px;">
+              <li>Adding single entropy loss to DAPO successfully delays collapse and improves performance, but does not fully prevent training instability</li>
+              <li>PAPOD with Double Entropy Loss consistently outperforms both DAPO variants and completely prevents collapse throughout training</li>
+              <li>The perception-aware optimization combined with robust regularization demonstrates superior effectiveness over simple entropy regularization</li>
+            </ul>
+          </div>
+        </div>
+
         <div id="qualitative-examples" class="tab-content">
           <h3 class="section-subtitle">Qualitative Examples</h3>
           
@@ -873,18 +1020,9 @@
         
         Intuitively, because we maximize a KL divergence that is theoretically unbounded, the model may "hack" KLprcp to drive the policy gradient loss toward zero.
         When the hacking occurs, the model takes progressively larger update steps and suffers a drastic drop in rewards.
-        To better regularize KLprcp in high-γ settings, we introduce <strong>Double Entropy Loss</strong>, an effective regularizer that prevents collapse while preserving performance.
+        To better regularize PAPO in high-γ and removed KL settings, we introduce <strong>Double Entropy Loss</strong>, an effective regularizer that prevents collapse while preserving performance.
         <!-- We conduct a comprehensive analysis of KLprcp Hacking, a unique failure mode where the model over-optimizes the implicit perception loss, and propose effective mitigation strategies. -->
       </p>
-
-      <h3 class="section-subtitle">Double Entropy Loss</h3>
-      This idea stems from our observation that rising rollout entropy in both π_θ and π_θ^mask is an early sign of collapse. Double Entropy Loss encourages the model to keep both entropies low, and can be expressed as:
-
-      <div class="figure-container">
-        <img src="./static/images/double_ent_loss.png" alt="double entropy loss" style="width: 100%; max-width: 400px;"/>
-        <!-- <div class="figure-caption"><strong>Example:</strong> Demonstration of how collapsed models generate unrelated tokens during reasoning.</div> -->
-      </div>
-      where H denotes the entropy loss, computed as the negative log probability of the generated sequence, and the ... part is identical to PAPO objective as shown above.
 
       <h3 class="section-subtitle">In-Depth Analysis of KLprcp Hacking</h3>
       <div class="tab-container">
