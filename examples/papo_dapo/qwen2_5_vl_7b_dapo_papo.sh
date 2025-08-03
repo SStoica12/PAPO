@@ -5,7 +5,7 @@ set -x
 export PYTHONUNBUFFERED=1
 export RAY_memory_usage_threshold=0.98
 
-CUDA_IDS=2,3,6,7
+CUDA_IDS=0,1,2,3
 N_GPU=4
 
 MODEL_PATH=Qwen/Qwen2.5-VL-7B-Instruct
