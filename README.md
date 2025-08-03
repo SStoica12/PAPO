@@ -181,6 +181,8 @@ bash examples/papo_dapo/qwen2_5_vl_7b_dapo_papo.sh
 ### **Pretrained Checkpoints**
 
 A collection of 7B/3B pretrained checkpoints on ViRL39K can be downloaded from [here](https://huggingface.co/collections/PAPOGalaxy/papo-qwen-686d92dd3d43b1ce698f851a). The checkpoints follows Qwen2.5-VL Huggingface format, which can be inferenced as drop-in replacement to https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct. 
+- PAPO-GRPO model collection: [PAPO-G](https://huggingface.co/collections/PAPOGalaxy/papo-g-688fd55ed6b49f343114ed6e)
+- PAPO-DAPO model collection: [PAPO-D](https://huggingface.co/collections/PAPOGalaxy/papo-d-688fd5917f3a2ffb715adcca)
 
 ### **Performance Evaluation**
 
