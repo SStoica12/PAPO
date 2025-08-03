@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import json
 
 import ray
@@ -26,6 +27,7 @@ from .data_loader import create_dataloader
 from .ray_trainer import RayPPOTrainer, ResourcePoolManager, Role
 
 
+# please make sure main_task is not scheduled on head
 @ray.remote(num_cpus=1)
 class Runner:
     """A runner for RL training."""
@@ -48,9 +50,10 @@ class Runner:
             use_fast=True,
         )
 
+        # define worker classes
         ray_worker_group_cls = RayWorkerGroup
         role_worker_mapping = {
-            Role.ActorRollout: ray.remote(FSDPWorker),
+            Role.ActorRolloutRef: ray.remote(FSDPWorker),
             Role.Critic: ray.remote(FSDPWorker),
             Role.RefPolicy: ray.remote(FSDPWorker),
         }
@@ -59,7 +62,7 @@ class Runner:
             global_pool_id: [config.trainer.n_gpus_per_node] * config.trainer.nnodes,
         }
         mapping = {
-            Role.ActorRollout: global_pool_id,
+            Role.ActorRolloutRef: global_pool_id,
             Role.Critic: global_pool_id,
             Role.RefPolicy: global_pool_id,
         }
@@ -93,7 +96,7 @@ class Runner:
         trainer.init_workers()
         trainer.fit()
 
-import os
+
 def main():
     cli_args = OmegaConf.from_cli()
     default_config = OmegaConf.structured(PPOConfig())
@@ -118,10 +121,7 @@ def main():
                 "PYTHONUNBUFFERED": "1",
             }
         }
-        ray.init(
-            local_mode = os.getenv("RAY_LOCAL_MODE", "false").lower() == "true",
-            runtime_env=runtime_env
-        )
+        ray.init(runtime_env=runtime_env)
 
     runner = Runner.remote()
     ray.get(runner.run.remote(ppo_config))

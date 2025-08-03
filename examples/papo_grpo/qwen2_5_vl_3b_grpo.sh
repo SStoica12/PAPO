@@ -1,10 +1,14 @@
 #!/bin/bash
+
 set -x
 
-CUDA_IDS=0,1,2,3
-N_GPU=4
+CUDA_IDS=0,1
+N_GPU=2
 
-MODEL_PATH=Qwen/Qwen2.5-VL-7B-Instruct
+export PYTHONUNBUFFERED=1
+export RAY_memory_usage_threshold=0.98
+
+MODEL_PATH=Qwen/Qwen2.5-VL-3B-Instruct
 
 TOTAL_EPOCHES=2
 GLOBAL_BATCH_SIZE=128
@@ -12,16 +16,15 @@ ROLLOUT_BATCH_SIZE=384
 VAL_BATCH_SIZE=512
 MAX_PROMPT_LENGTH=4096
 
-EXP_NAME="qwen2_5_vl_7b__grpo__ep${TOTAL_EPOCHES}_rb${ROLLOUT_BATCH_SIZE}_gb${GLOBAL_BATCH_SIZE}"
+EXP_NAME="qwen2_5_vl_3b__grpo__ep${TOTAL_EPOCHES}_rb${ROLLOUT_BATCH_SIZE}_gb${GLOBAL_BATCH_SIZE}"
 
 CONGI_FILE="examples/configs/config_grpo.yaml"
 TRAIN_FILE="PAPOGalaxy/PAPO_ViRL39K_train"
 VAL_FILE="PAPOGalaxy/PAPO_MMK12_test"
 
-FORMAT_PROMPT="examples/format_prompt/math_format_perception.jinja"
+FORMAT_PROMPT="examples/format_prompt/math_perception.jinja"
 REWARD_FUNCTION="examples/reward_function/math.py:compute_score"
 
-export RAY_memory_usage_threshold=0.98
 CUDA_VISIBLE_DEVICES=${CUDA_IDS} python3 -m verl.trainer.main \
     config=${CONGI_FILE} \
     data.train_files=${TRAIN_FILE} \

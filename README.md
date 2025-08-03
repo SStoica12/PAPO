@@ -17,10 +17,10 @@
 **PAPO**, a novel policy gradient algorithm that enhances multimodal reasoning through visually grounded optimization. PAPO can serve as a direct drop-in replacement for GRPO or DAPO without any additional assumptions.
 
 ## 🔥 News 
-- [x] Released PAPO_G (GRPO) models
-- [x] Released PAPO_G (GRPO) code
-- [ ] TODO: Release PAPO_D (DAPO) models
-- [ ] TODO: Release PAPO_D (DAPO) code
+- [x] **July 2025:** Released PAPO_G (GRPO) models
+- [x] **July 2025:** Released PAPO_G (GRPO) code
+- [x] **August 2025:** Released PAPO_D (DAPO) models
+- [x] **August 2025:** Released PAPO_D (DAPO) code
 
 ## 🌟 **Key Highlights**
 
@@ -116,44 +116,66 @@ The main training pipeline is adopted from [EasyR1](https://github.com/hiyouga/E
 ```bash
 # 3B model
 cd PAPO
-bash examples/qwen2_5_vl_3b_grpo.sh
+bash examples/papo_grpo/qwen2_5_vl_3b_grpo.sh
 
 # 7B model  
 cd PAPO
-bash examples/qwen2_5_vl_7b_grpo.sh
+bash examples/papo_grpo/qwen2_5_vl_7b_grpo.sh
 ```
 
-#### PAPO (γ = 0.01)
+#### **DAPO Baseline**
 ```bash
 # 3B model
 cd PAPO
-bash examples/qwen2_5_vl_3b_papo.sh
+bash examples/papo_dapo/qwen2_5_vl_3b_dapo.sh
 
 # 7B model  
 cd PAPO
-bash examples/qwen2_5_vl_7b_papo.sh
+bash examples/papo_dapo/qwen2_5_vl_7b_dapo.sh
 ```
 
-#### PAPO_H (γ = 0.02)
+#### **PAPO-G (γ = 0.01)**
 ```bash
 # 3B model
 cd PAPO
-bash examples/qwen2_5_vl_3b_papo_high.sh
+bash examples/papo_grpo/qwen2_5_vl_3b_grpo_papo.sh
 
-# 7B model (with double entropy loss)
+# 7B model  
 cd PAPO
-bash examples/qwen2_5_vl_7b_papo_high.sh
+bash examples/papo_grpo/qwen2_5_vl_7b_grpo_papo.sh
 ```
 
-#### PAPO + No Reference KL
+#### **PAPO-G + High γ (γ = 0.02)**
+```bash
+# 3B model
+cd PAPO
+bash examples/papo_grpo/qwen2_5_vl_3b_grpo_papo_high.sh
+
+# 7B model
+cd PAPO
+bash examples/papo_grpo/qwen2_5_vl_7b_grpo_papo_high.sh
+```
+
+#### **PAPO-G + No Reference KL**
 ```bash
 # 3B model (with double entropy loss)
 cd PAPO
-bash examples/qwen2_5_vl_3b_papo_no_kl_ref.sh
+bash examples/papo_grpo/qwen2_5_vl_3b_grpo_papo_no_kl_ref.sh
 
 # 7B model (with double entropy loss)
 cd PAPO
-bash examples/qwen2_5_vl_7b_papo_no_kl_ref.sh
+bash examples/papo_grpo/qwen2_5_vl_7b_grpo_papo_no_kl_ref.sh
+```
+
+#### **PAPO-D**
+```bash
+# 3B model
+cd PAPO
+bash examples/papo_dapo/qwen2_5_vl_3b_dapo_papo.sh
+
+# 7B model
+cd PAPO
+bash examples/papo_dapo/qwen2_5_vl_7b_dapo_papo.sh
 ```
 
 ### **Pretrained Checkpoints**

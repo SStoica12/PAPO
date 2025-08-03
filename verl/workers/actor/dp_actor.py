@@ -24,15 +24,20 @@ from einops import rearrange
 from ray.experimental.tqdm_ray import tqdm
 from torch import nn
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-from transformers.modeling_flash_attention_utils import index_first_axis, pad_input, unpad_input
 
 from ...protocol import DataProto
-from ...trainer import core_algos
+from ...trainer.core_algos import average_loss, compute_kl, compute_policy_loss
 from ...utils import torch_functional as VF
 from ...utils.py_functional import append_to_dict
 from ...utils.ulysses import gather_outputs_and_unpad, ulysses_pad_and_slice_inputs
 from .base import BasePPOActor
 from .config import ActorConfig
+
+
+try:
+    from flash_attn.bert_padding import index_first_axis, pad_input, rearrange, unpad_input
+except ImportError:
+    pass
 
 
 __all__ = ["DataParallelPPOActor"]
@@ -71,12 +76,17 @@ class DataParallelPPOActor(BasePPOActor):
         if position_ids.dim() == 3:  # qwen2vl mrope
             position_ids = position_ids.transpose(0, 1)  # (bsz, 3, seqlen) -> (3, bsz, seqlen)
 
-        multi_modal_inputs = {}
+        multi_modal_inputs = defaultdict(list)
         if "multi_modal_inputs" in micro_batch:
-            for key in micro_batch["multi_modal_inputs"][0].keys():
-                multi_modal_inputs[key] = torch.cat(
-                    [inputs[key] for inputs in micro_batch["multi_modal_inputs"]], dim=0
-                )
+            for input_dict in micro_batch["multi_modal_inputs"]:
+                for key, value in input_dict.items():
+                    multi_modal_inputs[key].append(value)
+
+            for key, value in multi_modal_inputs.items():
+                if len(value) != 0:
+                    multi_modal_inputs[key] = torch.cat(value, dim=0)
+                else:
+                    multi_modal_inputs[key] = None
 
         if self.config.padding_free:
             input_ids_rmpad, indices, *_ = unpad_input(
@@ -100,12 +110,12 @@ class DataParallelPPOActor(BasePPOActor):
             input_ids_rmpad_rolled = torch.roll(input_ids_rmpad, shifts=-1, dims=1)  # (1, total_nnz)
 
             # pad and slice the inputs if sp > 1
-            if self.config.ulysses_sequence_parallel_size > 1:
+            if self.config.ulysses_size > 1:
                 input_ids_rmpad, position_ids_rmpad, pad_size = ulysses_pad_and_slice_inputs(
-                    input_ids_rmpad, position_ids_rmpad, sp_size=self.config.ulysses_sequence_parallel_size
+                    input_ids_rmpad, position_ids_rmpad, sp_size=self.config.ulysses_size
                 )
                 input_ids_rmpad_rolled, _, _ = ulysses_pad_and_slice_inputs(
-                    input_ids_rmpad_rolled, None, self.config.ulysses_sequence_parallel_size
+                    input_ids_rmpad_rolled, None, self.config.ulysses_size
                 )
 
             input_ids_rmpad_rolled = input_ids_rmpad_rolled.squeeze(0)  # ((total_nnz / sp) + pad)
@@ -124,7 +134,7 @@ class DataParallelPPOActor(BasePPOActor):
             log_probs = self.log_probs_from_logits(logits=logits_rmpad, labels=input_ids_rmpad_rolled)
 
             # gather log_prob if sp > 1
-            if self.config.ulysses_sequence_parallel_size > 1:
+            if self.config.ulysses_size > 1:
                 # gather and unpad for the ulysses sp
                 log_probs = gather_outputs_and_unpad(log_probs, gather_dim=0, unpad_dim=0, padding_size=pad_size)
 
@@ -185,17 +195,14 @@ class DataParallelPPOActor(BasePPOActor):
 
         temperature = data.meta_info["temperature"]
         select_keys = ["responses", "input_ids", "attention_mask", "position_ids"]
-        if "multi_modal_inputs" in data.non_tensor_batch.keys():
-            non_tensor_select_keys = ["multi_modal_inputs"]
-        else:
-            non_tensor_select_keys = []
+        non_tensor_select_keys = ["multi_modal_inputs"]
 
         micro_batches = data.select(select_keys, non_tensor_select_keys).split(
             self.config.micro_batch_size_per_device_for_experience
         )
         log_probs_lst = []
         if self.rank == 0:
-            micro_batches = tqdm(micro_batches, desc="Compute log probs", position=2)
+            micro_batches = tqdm(micro_batches, desc="Compute log probs", position=1)
 
         for micro_batch in micro_batches:
             model_inputs = {**micro_batch.batch, **micro_batch.non_tensor_batch}
@@ -209,15 +216,10 @@ class DataParallelPPOActor(BasePPOActor):
         self.actor_module.train()
 
         temperature = data.meta_info["temperature"]  # temperature must be in the data.meta_info to avoid slient error
-        select_keys = ["responses", "input_ids", "attention_mask", "position_ids", "old_log_probs", "advantages"]
-        if self.config.use_kl_loss and not self.config.disable_kl:
-            select_keys.append("ref_log_probs")
+        select_keys = ["responses", "input_ids", "attention_mask", "position_ids"]
+        select_keys.extend(["old_log_probs", "ref_log_probs", "advantages"])
+        non_tensor_select_keys = ["multi_modal_inputs"]
 
-        if "multi_modal_inputs" in data.non_tensor_batch.keys():
-            non_tensor_select_keys = ["multi_modal_inputs"]
-        else:
-            non_tensor_select_keys = []
-        
         # for contrastive kl
         if "aug_log_probs" in data.batch.keys() and self.config.use_kl_prcp:
             select_keys.append("aug_log_probs")
@@ -234,7 +236,7 @@ class DataParallelPPOActor(BasePPOActor):
         metrics = defaultdict(list)
         for _ in range(self.config.ppo_epochs):
             if self.rank == 0:
-                mini_batches = tqdm(mini_batches, desc="Train mini-batches", position=2)
+                mini_batches = tqdm(mini_batches, desc="Train mini-batches", position=1)
 
             for mini_batch in mini_batches:
                 gradient_accumulation = (
@@ -242,10 +244,10 @@ class DataParallelPPOActor(BasePPOActor):
                 )
                 micro_batches = mini_batch.split(self.config.micro_batch_size_per_device_for_update)
                 if self.rank == 0:
-                    micro_batches = tqdm(micro_batches, desc="Update policy", position=3)
+                    micro_batches = tqdm(micro_batches, desc="Update policy", position=2)
 
                 for micro_batch in micro_batches:
-                    # for contrastive kl
+                    # for kl prcp
                     kl_prcp_weighting = micro_batch.non_tensor_batch.pop("kl_prcp_weighting", None)
                     kl_prcp_coef = micro_batch.non_tensor_batch.pop("kl_prcp_coef", None)
 
@@ -264,7 +266,7 @@ class DataParallelPPOActor(BasePPOActor):
                     log_probs = self._forward_micro_batch(model_inputs, temperature=temperature)
                     entropy_loss = -VF.masked_mean(log_probs, response_mask)  # estimator of entropy loss
 
-                    pg_loss, pg_clipfrac_higher, pg_clipfrac_lower, ppo_kl = core_algos.compute_policy_loss(
+                    pg_loss, pg_metrics = compute_policy_loss(
                         old_log_probs=old_log_probs,
                         log_probs=log_probs,
                         advantages=advantages,
@@ -272,20 +274,21 @@ class DataParallelPPOActor(BasePPOActor):
                         clip_ratio_low=self.config.clip_ratio_low,
                         clip_ratio_high=self.config.clip_ratio_high,
                         clip_ratio_dual=self.config.clip_ratio_dual,
+                        loss_avg_mode=self.config.loss_avg_mode,
                     )
-                    if "ref_log_probs" in model_inputs:
+                    if self.config.use_kl_loss and "ref_log_probs" in model_inputs:
                         ref_log_probs = model_inputs["ref_log_probs"]
                         # compute kl loss
-                        kld = core_algos.compute_kl(
+                        kld = compute_kl(
                             log_probs=log_probs,
                             ref_log_probs=ref_log_probs,
                             kl_penalty=self.config.kl_penalty,
                         )
-                        kl_loss = VF.masked_mean(kld, response_mask)
+                        kl_loss = average_loss(kld, response_mask, mode=self.config.loss_avg_mode)
                         pg_loss = pg_loss + kl_loss * self.config.kl_coef
                         metrics["actor/kl_loss"] = kl_loss.detach().item()
                         metrics["actor/kl_coef"] = self.config.kl_coef
-                    
+
                     discount_ratio = 1.0 # for entropy losses; maybe updated by annealing kl_prcp settings
                     
                     # for kl_prcp
@@ -294,7 +297,7 @@ class DataParallelPPOActor(BasePPOActor):
                         aug_entropy_loss = -VF.masked_mean(aug_log_probs, response_mask)  # estimator of entropy loss
                         
                         # compute kl_prcp
-                        aug_kld = core_algos.compute_kl(
+                        aug_kld = compute_kl(
                             log_probs=log_probs,
                             ref_log_probs=aug_log_probs,
                             kl_penalty=self.config.kl_prcp_penalty,
@@ -322,7 +325,7 @@ class DataParallelPPOActor(BasePPOActor):
                             aug_kld = torch.clamp(aug_kld, min=0.0, max=self.config.kl_prcp_clipping)
 
                         # kl_prcp loss
-                        kl_prcp_loss = VF.masked_mean(aug_kld, response_mask)
+                        kl_prcp_loss = average_loss(aug_kld, response_mask, mode=self.config.loss_avg_mode)
 
                         if kl_prcp_coef is None:
                             kl_prcp_coef = self.config.kl_prcp_coef
@@ -343,7 +346,7 @@ class DataParallelPPOActor(BasePPOActor):
                         metrics["actor/kl_prcp_coef"] = kl_prcp_coef
                         metrics["actor/kl_prcp_coef_annealing_discount"] = discount_ratio
                         metrics["actor/aug_entropy_loss"] = aug_entropy_loss.detach().item()
-                        metrics["actor/aug_entropy_loss_coef"] = self.config.aug_entropy_loss_coef
+                        metrics["actor/aug_entropy_loss_coef"] = self.config.aug_entropy_loss_coef     
 
                     if self.config.use_ori_entropy_loss:
                         pg_loss = pg_loss + self.config.ori_entropy_loss_coef * discount_ratio * entropy_loss
@@ -363,18 +366,17 @@ class DataParallelPPOActor(BasePPOActor):
                         pg_loss = pg_loss + sft_coef * sft_loss
                         # logging
                         metrics["actor/sft_loss"] = sft_loss.detach().item()
-                        metrics["actor/sft_coef"] = sft_coef
+                        metrics["actor/sft_coef"] = sft_coef               
 
-                    # final pg loss
                     loss = pg_loss / gradient_accumulation
                     loss.backward()
 
                     batch_metrics = {
                         "actor/pg_loss": pg_loss.detach().item(),
-                        "actor/pg_clipfrac_higher": pg_clipfrac_higher.detach().item(),
-                        "actor/pg_clipfrac_lower": pg_clipfrac_lower.detach().item(),
-                        "actor/entropy_loss": entropy_loss.detach().item(),
-                        "actor/ppo_kl": ppo_kl.detach().item(),
+                        "actor/pg_clipfrac_higher": pg_metrics["pg_clipfrac_higher"],
+                        "actor/pg_clipfrac_lower": pg_metrics["pg_clipfrac_lower"],
+                        "actor/entropy_loss": pg_metrics["entropy_loss"],
+                        "actor/ppo_kl": pg_metrics["ppo_kl"],
                     }
                     append_to_dict(metrics, batch_metrics)
 

@@ -17,10 +17,9 @@ PPO config
 
 import os
 from dataclasses import asdict, dataclass, field, fields, is_dataclass
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Tuple, Dict, List, Any
 
 from ..workers.config import WorkerConfig
-
 
 def recursive_post_init(dataclass_obj):
     if hasattr(dataclass_obj, "post_init"):
@@ -39,44 +38,75 @@ class DataConfig:
     answer_key: str = "answer"
     image_key: str = "images"
     aug_image_key: str = "images_aug"
+    video_key: str = "videos"
+    image_dir: Optional[str] = None
+    video_fps: float = 2.0
     max_prompt_length: int = 512
     max_response_length: int = 512
     rollout_batch_size: int = 512
+    mini_rollout_batch_size: Optional[int] = None
     val_batch_size: int = -1
     format_prompt: Optional[str] = None
-    format_prompt_stage_2: Optional[str] = None
     override_chat_template: Optional[str] = None
     shuffle: bool = True
     seed: int = 1
-    max_pixels: int = 4194304
-    min_pixels: int = 262144
+    min_pixels: Optional[int] = 262144
+    max_pixels: Optional[int] = 4194304
     filter_overlong_prompts: bool = True
+    filter_overlong_prompts_workers: int = 16
 
     def post_init(self):
+        if self.image_dir is not None:
+            if os.path.exists(self.image_dir):  # ray job uses absolute path
+                self.image_dir = os.path.abspath(self.image_dir)
+            else:
+                print(f"Image directory {self.image_dir} not found.")
+                self.image_dir = None
+
         if self.format_prompt is not None:
-            if os.path.exists(self.format_prompt):
+            if os.path.exists(self.format_prompt):  # ray job uses absolute path
                 self.format_prompt = os.path.abspath(self.format_prompt)
             else:
+                print(f"Format prompt file {self.format_prompt} not found.")
                 self.format_prompt = None
 
-        if self.format_prompt_stage_2 is not None:
-            if os.path.exists(self.format_prompt_stage_2):
-                self.format_prompt_stage_2 = os.path.abspath(self.format_prompt_stage_2)
-            else:
-                self.format_prompt_stage_2 = None
 
 @dataclass
 class AlgorithmConfig:
     gamma: float = 1.0
+    """discount factor for ppo gae advantage estimator"""
     lam: float = 1.0
+    """lambda value for ppo gae advantage estimator"""
     adv_estimator: str = "grpo"
+    """advantage estimator, support `gae`, `grpo`, `reinforce_plus_plus`, `remax`, `rloo`"""
     disable_kl: bool = False
+    """disable reference model"""
     use_kl_loss: bool = False
+    """use kl loss instead of kl in reward"""
     kl_penalty: str = "kl"
+    """kl penalty type, support `kl`, `abs`, `mse`, `low_var_kl`, `full`"""
     kl_coef: float = 1e-3
+    """kl coefficient"""
     kl_type: str = "fixed"
-    kl_horizon: float = 0.0
-    kl_target: float = 0.0
+    """kl controller type, support `fixed`, `adaptive`"""
+    kl_horizon: float = 10000.0
+    """kl horizon for adaptive kl controller"""
+    kl_target: float = 0.1
+    """target kl for adaptive kl controller"""
+    online_filtering: bool = False
+    """use online filtering"""
+    filter_key: str = "overall"
+    """reward key for filtering samples"""
+    filter_low: float = 0.01
+    """filter out low reward samples if online filtering"""
+    filter_high: float = 0.99
+    """filter out high reward samples if online filtering"""
+    
+    """average setting for actor"""
+    loss_avg_mode: str = "token" # "token" or "seq" 
+
+    
+    """kl_prcp for papo"""
     use_kl_prcp: bool = False
     contrastive_type: str = "augmented"
     kl_prcp_schedule: str = "fixed"
@@ -87,8 +117,7 @@ class AlgorithmConfig:
     aug_config: Dict[str, Any] = field(default_factory=dict)
     incorrect_weighting: float = 0.1
 
-    
-    # Double Entropy Loss
+    """double Entropy Loss"""
     use_aug_entropy_loss: bool = False
     aug_entropy_loss_coef: float = 0.03
 
@@ -96,7 +125,7 @@ class AlgorithmConfig:
     ori_entropy_loss_coef: float = 0.03
     
 
-    # Other experimental settings    
+    """other experimental settings"""
     use_kl_prcp_clipping: bool = False
     kl_prcp_clipping: float = 0.2
 
@@ -104,35 +133,61 @@ class AlgorithmConfig:
     kl_prcp_token_level_mask_top_p: float = 0.2
 
     use_sft_loss: bool = False
-    sft_loss_coef: float = 1e-3
+    sft_loss_coef: float = 1e-3   
+
 
 @dataclass
 class TrainerConfig:
-    total_epochs: int = 10
+    total_epochs: int = 15
+    """total epochs for training"""
     max_steps: Optional[int] = None
-    project_name: str = "papo"
-    experiment_name: str = "papo_exp"
+    """max steps for training, if specified, total_epochs is ignored"""
+    project_name: str = "easy_r1"
+    """project name for logger"""
+    experiment_name: str = "demo"
+    """experiment name for logger"""
     logger: Tuple[str] = ("console", "wandb")
+    """logger type, support `console`, `mlflow`, `swanlab`, `tensorboard`, `wandb`"""
     nnodes: int = 1
+    """number of nodes for training"""
     n_gpus_per_node: int = 8
+    """number of gpus per node for training"""
+    max_try_make_batch: int = 20
+    """max number of generations for online filtering, -1 means no limit"""
     critic_warmup: int = 0
+    """critic warmup steps"""
     val_freq: int = -1
+    """validation frequency, -1 means no validation"""
     val_before_train: bool = True
+    """validate before training"""
     val_only: bool = False
+    """validate only, skip training"""
     val_generations_to_log: int = 0
+    """number of generations to log for validation"""
     save_freq: int = -1
+    """save frequency, -1 means no saving"""
     save_limit: int = -1
+    """max number of checkpoints to save, -1 means no limit"""
+    save_model_only: bool = False
+    """save model only, no optimizer state dict"""
     save_checkpoint_path: Optional[str] = None
+    """save checkpoint path, if not specified, use `checkpoints/project_name/experiment_name`"""
     load_checkpoint_path: Optional[str] = None
+    """load checkpoint path"""
     save_best_checkpoint: bool = False
+    """save best checkpoint"""
 
     def post_init(self):
         if self.save_checkpoint_path is None:
             self.save_checkpoint_path = os.path.join("checkpoints", self.project_name, self.experiment_name)
 
-        self.save_checkpoint_path = os.path.abspath(self.save_checkpoint_path)
+        self.save_checkpoint_path = os.path.abspath(self.save_checkpoint_path)  # ray job uses absolute path
         if self.load_checkpoint_path is not None:
-            self.load_checkpoint_path = os.path.abspath(self.load_checkpoint_path)
+            if os.path.exists(self.load_checkpoint_path):  # ray job uses absolute path
+                self.load_checkpoint_path = os.path.abspath(self.load_checkpoint_path)
+            else:
+                print(f"Model checkpoint {self.load_checkpoint_path} not found.")
+                self.load_checkpoint_path = None
 
 
 @dataclass
@@ -162,12 +217,11 @@ class PPOConfig:
         self.worker.actor.kl_prcp_clipping = self.algorithm.kl_prcp_clipping
         self.worker.actor.use_kl_prcp_token_level_mask = self.algorithm.use_kl_prcp_token_level_mask
         self.worker.actor.kl_prcp_token_level_mask_top_p = self.algorithm.kl_prcp_token_level_mask_top_p
-
-        # auto keys for sft loss
         self.worker.actor.use_sft_loss = self.algorithm.use_sft_loss
         self.worker.actor.sft_loss_coef = self.algorithm.sft_loss_coef
 
-
+        self.worker.actor.loss_avg_mode = self.algorithm.loss_avg_mode
+        
     def deep_post_init(self):
         recursive_post_init(self)
 
