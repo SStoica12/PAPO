@@ -347,6 +347,14 @@ class RLHFDataset(Dataset):
             model_inputs = self.processor(processed_images, [prompt], add_special_tokens=False, return_tensors="pt")
             input_ids = model_inputs.pop("input_ids")[0]
             attention_mask = model_inputs.pop("attention_mask")[0]
+            # convert images to PIL. Images in PAPO are represented as dicts: {'bytes', 'path'}
+            pil_images = []
+            for img in images:
+                if isinstance(img, dict) and 'bytes' in img:
+                    img_bytes = img['bytes']
+                    stream = BytesIO(img_bytes)
+                    pil_img = Image.open(stream) 
+                    pil_images.append(pil_img)
             example["multi_modal_data"] = {"images": images}
             # example["multi_modal_inputs"] = dict(model_inputs)
 
